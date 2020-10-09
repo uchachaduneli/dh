@@ -18,14 +18,14 @@ import java.util.Map;
 public class DhlSMS {
 
     public static void sendSms(String text, Map<Integer, List<String>> numbers) throws SQLException, IOException {
-
+        final ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
         List<SentSMSes> smsforDb = new ArrayList<SentSMSes>();
         SentSMSes sms;
         for (Map.Entry<Integer, List<String>> entry : numbers.entrySet()) {
             for (String num : entry.getValue()) {
                 sms = new SentSMSes();
 
-                URLConnection connection = new URL("http://81.95.160.47/mt/oneway?username=dhl&password=D580&client_id=580&service_id=1&to=" + num
+                URLConnection connection = new URL(confParams.getSms_url() + num
                         + "&text=" + URLEncoder.encode(text, "UTF-8") + "&coding=2").openConnection();
                 connection.setRequestProperty("Accept-Charset", "UTF-8");
 

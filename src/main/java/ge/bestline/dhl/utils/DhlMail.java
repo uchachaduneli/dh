@@ -13,14 +13,6 @@ public class DhlMail {
 
     static Properties props = new Properties();
 
-    static {
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.port", "587");
-        props.put("mail.smtp.host", "smtp.office365.com");
-        props.put("mail.smtp.auth", "true");
-
-    }
-
     private static void addAttachment(Multipart multipart, String filePath) throws MessagingException {
         DataSource source = new FileDataSource(filePath);
         BodyPart messageBodyPart = new MimeBodyPart();
