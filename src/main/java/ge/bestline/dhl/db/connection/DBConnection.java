@@ -9,9 +9,7 @@ import java.sql.SQLException;
  * @author Ucha Chaduneli
  */
 public class DBConnection implements Serializable {
-//
 
-    //	    private static final String dbUrl = "jdbc:mysql://212.72.143.212:15816/";
     private static final String dbUrl = "jdbc:mysql://localhost:3306/";
     private static final String dbName = "dhl?characterEncoding=utf8";
     private static final String dbDriver = "com.mysql.jdbc.Driver";
