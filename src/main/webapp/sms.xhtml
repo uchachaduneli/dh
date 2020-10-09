@@ -1,0 +1,113 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<ui:composition template="layoutes/baseLayout.xhtml">
+    <ui:define name="mainContent">
+        <link rel="stylesheet" href="resources/css/reports.css"/>
+        <link rel="stylesheet" href="resources/css/home.css"/>
+        <h:form prependId="false" id="reportsMainFormId">
+            <p:growl id="globalMessages" showDetail="true" life="4000"/>
+            <p:commandButton value="|" update="@form" action="#{smsBean.init()}"
+                             style="width: 0px; height: 0px; margin-left: 0.2%"/>
+            <p:panel header="" style="height: 75px;">
+                <center>
+                    <p:watermark for="historyFromDateID" value="თარიღი დან"/>
+                    <p:watermark for="historyToDateID" value="მდე"/>
+                    <p:watermark for="srchToId" value="ადრესატი"/>
+                    <p:watermark for="srchTextId" value="ტექსტი"/>
+                    <p:watermark for="srchCompanyId" value="კომპანია | საიდენტ. N"/>
+                    <p:panelGrid columns="8">
+                        <p:calendar navigator="true" value="#{smsBean.searchObj.sendDateStart}"
+                                    id="historyFromDateID">
+                            <p:ajax event="dateSelect" listener="#{smsBean.validateFromDateFilter()}"
+                                    update="@(#historyToDateID, #globalMessages)"/>
+                        </p:calendar>
+                        <h:panelGroup layout="block" style="padding-right: 15px;">
+                            <p:calendar navigator="true" value="#{smsBean.searchObj.sendDateEnd}"
+                                        id="historyToDateID">
+                                <p:ajax event="dateSelect" listener="#{smsBean.validateToDateFilter()}"
+                                        update="@(#globalMessages)"/>
+                            </p:calendar>
+                            <p:commandButton icon="ui-icon-closethick" update="@(#historyFromDateID, #historyToDateID)"
+                                             style="height: 25px; position: absolute; font-size: 10px!important;"
+                                             title="გამოიყენეთ დროითი ფილტრის გასასუფთავებლად"
+                                             action="#{smsBean.resetDateFilter()}"/>
+                        </h:panelGroup>
+
+                        <p:inputText value="#{smsBean.searchObj.leadData}" id="srchCompanyId">
+                            <p:ajax event="change" listener="#{smsBean.filterByCompany()}"/>
+                        </p:inputText>
+                        <p:inputText value="#{smsBean.searchObj.to}" id="srchToId">
+                            <p:ajax event="change" listener="#{smsBean.filterByTo()}"/>
+                        </p:inputText>
+                        <p:inputText value="#{smsBean.searchObj.text}" id="srchTextId">
+                            <p:ajax event="change" listener="#{smsBean.filterByText()}"/>
+                        </p:inputText>
+
+                        <p:selectOneMenu value="#{smsBean.searchObj.status}">
+                            <f:selectItem itemLabel="სტატუსი" itemValue=""/>
+                            <f:selectItem itemLabel="წარმატებული" itemValue="#{1}"/>
+                            <f:selectItem itemValue="#{2}" itemLabel="წარუმატებელი"/>
+                            <p:ajax event="change" listener="#{smsBean.filterStatus()}"/>
+                        </p:selectOneMenu>
+
+                        <p:commandButton action="#{smsBean.init()}" icon="ui-icon-search" value="ძებნა" update="@form"
+                                         style="margin-left: 25px;"/>
+
+                        <p:selectOneMenu value="#{smsBean.rowLimit}">
+                            <f:selectItems value="#{smsBean.rowCountList}"/>
+                            <p:ajax event="change" update="@form" listener="#{smsBean.rowsCountChangeListener()}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                </center>
+            </p:panel>
+            <h:panelGroup style="margin: 5px;">
+                <h:outputFormat escape="false" value="#{smsBean.paginator}" class="case-dttbl-paginator-facet"/>
+            </h:panelGroup>
+            <p:dataTable id="operatorLeadsTableId2"
+                         emptyMessage="ჩანაწერი არ მოიძებნა"
+                         var="var"
+                         rowKey="#{var.id}"
+                         value="#{smsBean.smsList}"
+                         selection="#{smsBean.slctedSms}"
+                         selectionMode="single"
+                         widgetVar="_tblList"
+                         style="max-height: 550px!important; overflow: auto;"
+                         currentPageReportTemplate="მოიძებნა ({totalRecords})">
+                <f:facet name="header">
+                </f:facet>
+                <p:column headerText="ID">
+                    <h:outputText value="#{var.id}"/>
+                </p:column>
+                <p:column headerText="კომპანია">
+                    <h:outputText value="#{var.leadData}"/>
+                </p:column>
+                <p:column headerText="ადრესატი">
+                    <h:outputText value="#{var.to}"/>
+                </p:column>
+                <p:column headerText="ტექსტი">
+                    <h:outputText value="#{var.text}"/>
+                </p:column>
+                <p:column headerText="სტატუსი">
+                    <center>
+                        <h:outputText styleClass="ui-icon ui-icon-check" rendered="#{var.status eq 1}"
+                                      title="#{var.response}"/>
+                        <h:outputText styleClass="ui-icon ui-icon-closethick" rendered="#{var.status ne 1}"
+                                      title="#{var.response}"/>
+                    </center>
+                </p:column>
+                <p:column headerText="დრო">
+                    <h:outputText style="width: 100%;" value="#{var.strSendTime}"/>
+                </p:column>
+                <f:facet name="footer" class="case-dttbl-paginator-facet">
+                </f:facet>
+            </p:dataTable>
+            <h:panelGroup style="margin: 5px;">
+                <h:outputFormat escape="false" value="#{smsBean.paginator}" class="case-dttbl-paginator-facet"/>
+            </h:panelGroup>
+        </h:form>
+    </ui:define>
+</ui:composition>
+</html>

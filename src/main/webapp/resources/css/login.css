@@ -1,0 +1,82 @@
+.login {
+    width: 340px;
+    height: 300px;
+    padding: 0;
+    margin: 200px auto;
+    color: #f6a828;
+    font: 14px Arial, Helvetica, sans-serif;
+    -moz-border-radius: 20px;
+    -webkit-border-radius: 20px;
+    -khtml-border-radius: 20px;
+    border-radius: 20px;
+    background-color: #f6a828;
+    border: #c5c4c5 1px solid;
+    -webkit-box-shadow: 25px 25px 65px -10px #bfbebc;
+    box-shadow: 25px 25px 65px -10px #f6a828;
+}
+
+.login input[type=text], .login input[type=password] {
+    margin: 0px;
+    text-align: center;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -khtml-border-radius: 10px;
+    border-radius: 10px;
+    border: 1px solid #C2C2FF;
+    float: left;
+    width: 100%;
+    height: 37px;
+}
+
+.login input[type=password] {
+    margin: 10px 0px 0px 0px;
+}
+
+.login input[type=text]:focus, .login input[type=password]:focus, .login [type=submit]:focus {
+    outline: none;
+}
+
+.login [type=submit] {
+    width: 172px;
+    height: 40px;
+    margin: 20px 0px 0px 0px;
+    background: #FFF;
+    cursor: pointer;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    -khtml-border-radius: 8px;
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    font-size: 14px;
+    color: #131212;
+    font-weight: bold;
+}
+
+.login [type=submit]:hover {
+    border: #003399 1px solid;
+}
+
+.login [type=submit]:active {
+    font-weight: bold;
+}
+
+.login ul {
+    list-style-type: none;
+    margin: 82px auto;
+    padding: 0px;
+    width: 172px;
+}
+
+.login ul li {
+    clear: both;
+    overflow: hidden;
+    margin: 0px;
+    padding: 0px;
+}
+
+.login ul span {
+    float: left;
+    display: inline;
+    width: 97px;
+    text-align: right;
+}

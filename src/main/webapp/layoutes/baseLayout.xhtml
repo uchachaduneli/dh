@@ -1,0 +1,254 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<ui:composition template="../index.xhtml">
+    <ui:define name="header">
+        <link rel="stylesheet" href="resources/css/layout.css"/>
+        <link rel="stylesheet" href="resources/css/reset.css"/>
+        <h:form>
+            <div class="wrap">
+                <div class="lft">
+                    <a href="home.jsf?active=#{utilBean.getParam('active')}" class="logo">
+                        <img src="resources/imgs/logo.png"
+                             style=" width: 50%;
+                             margin-top: 5%;
+                             margin-left: 10%;
+                            padding-bottom: 5%;">
+                        </img>
+                    </a>
+                </div>
+                <div class="mddle"><br/>
+                    <span style="color: #b20018;
+                            font-weight: bolder;
+                            padding-top: 5%;
+                            font-size: 38px;
+                            font-style: italic;
+                            font-family: sans-serif;">
+                    Georgian Express
+                </span>
+                </div>
+                <div class="rght">
+
+                    <div style="width: 100%; display: table;">
+                        <div style="display: table-row">
+                            <div style="width: 600px; display: table-cell;vertical-align: bottom;">
+                                <p:commandButton id="addUSerButID" icon="ui-icon-person" value="თანამშრომლები"
+                                                 rendered="#{utilBean.admin or utilBean.iurist}"
+                                                 action="#{utilBean.loadWorkers()}"
+                                                 oncomplete="usersActionListWidget.show();"
+                                                 update="@(#usersActionListFrmID)"
+                                                 style="margin-left: 50px;"/>
+
+                                <p:commandButton icon="ui-icon-lightbulb" value="დეპარტამენტები"
+                                                 style="margin-left: 15px;"
+                                                 rendered="#{utilBean.admin or utilBean.iurist}"
+                                                 action="#{utilBean.loadDeparts()}"
+                                                 oncomplete="departsActionListWidget.show();"
+                                                 update="@(#departsActionListFrmID)"/>
+                                <p:commandButton onclick="window.location.href = '#{request.contextPath}/sms.jsf'"
+                                                 icon="ui-icon-clock" value="SMS history"
+                                                 rendered="#{!utilBean.operator}"/>
+                            </div>
+                            <div style="display: table-cell;"><br/>
+                                <h:outputText value="#{utilBean.userName}"/><br/>
+
+                                <p:commandButton id="logOutBtn" value="გასვლა" icon="ui-icon-power"
+                                                 widgetVar="logoutButtonWidget"
+                                                 onclick="confirmationLogout.show();"
+                                                 rendered="#{utilBean.hasSession()}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p:confirmDialog message="დარწმუნებული ხართ რომ გსურთ გამოსვლა?"
+                             header="გამოსვლა" severity="alert" widgetVar="confirmationLogout">
+                <p:commandButton value="დიახ" oncomplete="confirmationLogout.hide()" action="#{utilBean.logout()}"/>
+                <p:commandButton value="არა" onclick="confirmation.hide();"/>
+            </p:confirmDialog>
+            <p:confirmDialog width="550" message="დარწმუნებული ხართ რომ გსურთ მომხმარებლის წაშლა"
+                             rendered="#{utilBean.admin or utilBean.iurist}"
+                             header="მომხმარებლის წაშლა" severity="alert" widgetVar="confirmOfUserDeletion">
+                <p:commandButton value="დიახ" update="@(#usersActionListFrmID)" action="#{utilBean.deleteUser()}"/>
+                <p:commandButton value="არა" onclick="confirmOfUserDeletion.hide();"/>
+            </p:confirmDialog>
+            <p:confirmDialog width="550" message="დარწმუნებული ხართ რომ გსურთ დეპარტამენტის წაშლა?"
+                             rendered="#{utilBean.admin or utilBean.iurist}"
+                             header="დეპარტამენტის წაშლა" severity="alert" widgetVar="confirmOfDepartDeletion">
+                <p:commandButton value="დიახ" update="@(#departsActionListFrmID)"
+                                 action="#{utilBean.deleteDepartament()}"/>
+                <p:commandButton value="არა" onclick="confirmOfDepartDeletion.hide();"/>
+            </p:confirmDialog>
+        </h:form>
+        <p:dialog widgetVar="departsActionListWidget" modal="true" rendered="#{utilBean.admin or utilBean.iurist}"
+                  header="დეპარტამენტები" resizable="false" style="max-height: 600px; overflow: auto;" width="500">
+            <h:form id="departsActionListFrmID" prependId="false" title="მოქმედებებისთვის გამოიყენეთ კონტექსტური მენიუ">
+                <p:growl life="5000" showDetail="true"/>
+
+                <p:contextMenu for="departsDataTableId">
+                    <p:menuitem value="რედაქტირება" icon="ui-icon-pencil" update="@(#insertDepartDlgFrmID)"
+                                onclick="insertDepartDlgwidg.show();"/>
+                    <p:menuitem value="წაშლა" icon="ui-icon-trash" onclick="confirmOfDepartDeletion.show();"/>
+                </p:contextMenu>
+                <center>
+                    <p:dataTable id="departsDataTableId"
+                                 value="#{utilBean.departments}"
+                                 var="depart"
+                                 styleClass="mainTableStyleClass"
+                                 rowKey="#{depart.departmentId}"
+                                 selection="#{utilBean.selectedDepartment}"
+                                 selectionMode="single"
+                                 emptyMessage="ჩანაწერი არ მოიძებნა"
+                                 style="width: 100%;">
+                        <f:facet name="header">
+                            <p:commandButton icon="ui-icon-person" value="დამატება" action="#{utilBean.initAddDepart()}"
+                                             oncomplete="insertDepartDlgwidg.show();" update="@(#insertDepartDlgFrmID)"
+                                             style="margin-left: 10px; float: left; font-size: 15px!important;font-weight: normal;"/>
+                        </f:facet>
+                        <p:column headerText="ID">
+                            <h:outputText value="#{depart.departmentId}"/>
+                        </p:column>
+                        <p:column headerText="სახელი">
+                            <h:outputText value="#{depart.departmentName}"/>
+                        </p:column>
+                    </p:dataTable>
+                </center>
+                <p:commandButton value="დახურვა" icon="ui-icon-close"
+                                 style=" float: right; font-weight: normal !important; margin-top: 5px;font-size: 14px;"
+                                 onclick="departsActionListWidget.hide();"/>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="insertDepartDlgwidg" rendered="#{utilBean.admin or utilBean.iurist}" modal="true"
+                  header="დეპარტამენტის დამატება/რედაქტირება" resizable="false" width="500">
+            <h:form id="insertDepartDlgFrmID">
+                <p:growl life="5000" showDetail="true"/>
+                <p:panelGrid columns="2" style="width: 100%;" styleClass="pnlGridClass">
+
+                    <h:outputLabel value="დეპარტამენტის სახელი"/>
+                    <p:inputText value="#{utilBean.selectedDepartment.departmentName}" style="width: 100%;"/>
+
+                </p:panelGrid>
+                <center>
+                    <p:commandButton id="addUserDialogButtonID" value="შენახვა" update="@(#departsActionListFrmID)"
+                                     action="#{utilBean.departAction()}" icon="ui-icon-disk"
+                                     style=" font-weight: normal !important; margin-top: 5px; font-size: 14px!important; width: 50%;"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="usersActionListWidget" rendered="#{utilBean.admin or utilBean.iurist}" modal="true"
+                  id="usersActionListDlgId" header="თანამშრომლები"
+                  resizable="false" style="max-height: 600px; overflow: auto;" width="800">
+            <h:form id="usersActionListFrmID" prependId="false" title="მოქმედებებისთვის გამოიყენეთ კონტექსტური მენიუ">
+                <p:growl life="5000" showDetail="true"/>
+
+                <p:contextMenu for="usersDataTableId">
+                    <p:menuitem value="რედაქტირება" icon="ui-icon-pencil" update="@(#insertUserDlgFrmID)"
+                                action="#{utilBean.editUser()}" onclick="insertUserDlgwidg.show();"/>
+                    <p:menuitem value="წაშლა" icon="ui-icon-trash" onclick="confirmOfUserDeletion.show();"/>
+                </p:contextMenu>
+                <center>
+                    <p:dataTable id="usersDataTableId"
+                                 value="#{utilBean.workers}"
+                                 var="usr"
+                                 styleClass="mainTableStyleClass"
+                                 rowKey="#{usr.id}"
+                                 selection="#{utilBean.axaliUseri}"
+                                 selectionMode="single"
+                                 emptyMessage="ჩანაწერი არ მოიძებნა"
+                                 style="width: 100%;">
+                        <f:facet name="header">
+                            <p:commandButton id="addUserfromdlgButnID" icon="ui-icon-person" value="დამატება"
+                                             action="#{utilBean.initAddUser()}"
+                                             oncomplete="insertUserDlgwidg.show();" update="@(#insertUserDlgFrmID)"
+                                             style="margin-left: 10px; float: left; font-size: 15px!important;font-weight: normal;"/>
+                        </f:facet>
+                        <p:column headerText="ID">
+                            <h:outputText value="#{usr.id}"/>
+                        </p:column>
+                        <p:column headerText="ნიკი">
+                            <h:outputText value="#{usr.userName}"/>
+                        </p:column>
+                        <p:column headerText="სახელი, გვარი">
+                            <h:outputText value="#{usr.description}"/>
+                        </p:column>
+                        <p:column headerText="ტიპი">
+                            <h:outputText value="#{usr.typeName}"/>
+                        </p:column>
+                        <p:column headerText="დაშვება ინვენტარ.">
+                            <h:outputText value="#{usr.inventarAccess ? 'კი':'არა'}"/>
+                        </p:column>
+                        <p:column headerText="დაშვების დონე">
+                            <h:outputText value="#{usr.invTypeName}"/>
+                        </p:column>
+                    </p:dataTable>
+                </center>
+                <p:commandButton value="დახურვა" icon="ui-icon-close"
+                                 style=" float: right; font-weight: normal !important; margin-top: 5px;font-size: 14px;"
+                                 onclick="usersActionListWidget.hide();"/>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="insertUserDlgwidg" rendered="#{utilBean.admin or utilBean.iurist}" modal="true"
+                  id="insertUserDlgId"
+                  header="თანამშრომლის დამატება/რედაქტირება" resizable="false" width="500">
+            <h:form id="insertUserDlgFrmID">
+                <p:growl life="5000" showDetail="true" id="inserting_user_growl_id"/>
+                <p:panelGrid columns="2" style="width: 100%;" styleClass="pnlGridClass">
+                    <h:outputLabel value="დაშვება ინვენტარიზაციაზე"/>
+                    <p:selectBooleanCheckbox value="#{utilBean.axaliUseri.inventarAccess}">
+                        <p:ajax update="@form"/>
+                    </p:selectBooleanCheckbox>
+                    <h:outputLabel value="ინვენტარიზაციაზე დაშვების დონე(მხოლოდ ადმინისტრატორი ან ოპერატორი)"
+                                   rendered="#{utilBean.axaliUseri.inventarAccess}"/>
+                    <p:selectOneMenu effect="fade" value="#{utilBean.axaliUseri.invTypeId}"
+                                     rendered="#{utilBean.axaliUseri.inventarAccess}" style="width: 70%;">
+                        <f:selectItems value="#{utilBean.userStatuses}"/>
+                    </p:selectOneMenu>
+                    <h:outputLabel value="პაროლის შეცვლა" rendered="#{utilBean.userEdit}"/>
+                    <p:selectBooleanCheckbox value="#{utilBean.axaliUseri.editPass}" rendered="#{utilBean.userEdit}">
+                        <p:ajax update="@form"/>
+                    </p:selectBooleanCheckbox>
+                    <h:outputLabel value="ნიკი"/>
+                    <h:panelGroup>
+                        <p:inputText value="#{utilBean.axaliUseri.userName}"
+                                     title="შეამოწმეთ ნიკის თავისუფლება ღილაკის მეშვეობით(მხოლოდ ახალი თანამშრომლის დამატებისას)"
+                                     style="width: 80%!important;"/>
+                        <p:commandButton action="#{utilBean.checkUserName()}" icon="ui-icon-check" update="@form"
+                                         title="შემოწმება"/>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="პაროლი" rendered="#{utilBean.axaliUseri.editPass}"/>
+                    <p:password value="#{utilBean.axaliUseri.password}" style="width: 100%;"
+                                rendered="#{utilBean.axaliUseri.editPass}"/>
+
+                    <h:outputLabel value="გაიმეორეთ პაროლი" rendered="#{utilBean.axaliUseri.editPass}"/>
+                    <p:password value="#{utilBean.passwordConrfm}" style="width: 100%;"
+                                rendered="#{utilBean.axaliUseri.editPass}"/>
+
+                    <h:outputLabel value="სახელი, გვარი"/>
+                    <p:inputText value="#{utilBean.axaliUseri.description}" style="width: 100%;"/>
+
+                    <h:outputLabel value="კატეგორია"/>
+                    <p:selectOneMenu effect="fade" value="#{utilBean.axaliUseri.typeId}" style="width: 70%;">
+                        <f:selectItems value="#{utilBean.userStatuses}"/>
+                    </p:selectOneMenu>
+
+                </p:panelGrid>
+                <center>
+                    <p:commandButton id="addUserDialogButtonID2" value="შენახვა" update="@(#usersActionListFrmID)"
+                                     action="#{utilBean.userAction()}" icon="ui-icon-disk"
+                                     style=" font-weight: normal !important; margin-top: 5px; font-size: 14px!important; width: 50%;"/>
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+    <ui:define name="mainContent">
+        <ui:insert name="mainContent"/>
+    </ui:define>
+</ui:composition>
+</html>

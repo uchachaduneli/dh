@@ -1,0 +1,825 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<ui:composition template="layoutes/baseLayout.xhtml">
+    <ui:define name="mainContent">
+        <link rel="stylesheet" href="resources/css/home.css"/>
+        <h:form id="operHomeForm" prependId="false" style="width: 100%;">
+            <p:growl id="globalMessages" showDetail="true" life="4000"/>
+            <p:commandButton value="|" update="@form" action="#{leadBean.init()}"
+                             style="width: 0px; height: 0px; margin-left: 0.2%"/>
+            <p:panel header="">
+                <p:watermark value="დან" for="startDateFilterId"/>
+                <p:watermark value="მდე" for="endDateFilterId"/>
+                <p:watermark value="კომპანია" for="srchCompNameId"/>
+                <p:watermark value="საიდენტ. &#8470;" for="srchCompIdentCodeId"/>
+                <p:watermark value="ანგარიშის. &#8470;" for="srchCompaccountNumberId"/>
+                <p:watermark value="ხელშეკრ. &#8470;" for="srchCompContractCodeId"/>
+                <p:watermark value="ელ.ფოსტა" for="srchMailId"/>
+                <p:watermark value="ტელეფონი" for="srchPhoneId"/>
+                <p:watermark value="ფასდაკ." for="srchCompSalePercentId"/>
+                <p:watermark value="სერვ. ტიპი" for="srchCompServiceTypeId"
+                             rendered="#{utilBean.iurist or utilBean.admin}"/>
+                <p:panelGrid columns="8" styleClass="filtersgridStyleClass" style="width: 99%;">
+                    <p:commandButton value="დამატება"
+                                     action="#{leadBean.initDialog(0)}"
+                                     icon="ui-icon-plus"
+                                     update="@(#insertDlgFormId)"
+                                     oncomplete="insertDLGwidg.show();"/>
+                    <p:commandButton value="Send Mail / SMS"
+                                     action="#{leadBean.initNewContaction()}"
+                                     icon="ui-icon-mail-closed"
+                                     update="@(#smsDlgFormId)"
+                                     oncomplete="smsDLGwidg.show();"/>
+                    <p:inputText value="#{leadBean.searchLead.email}" id="srchMailId"/>
+                    <p:inputText value="#{leadBean.searchLead.phone}" id="srchPhoneId"/>
+
+                    <p:calendar navigator="true" value="#{leadBean.searchLead.contractStart}"
+                                id="startDateFilterId">
+                        <p:ajax event="dateSelect" listener="#{leadBean.validateFromDateFilter()}"
+                                update="@(#endDateFilterId, #globalMessages)"/>
+                    </p:calendar>
+                    <h:panelGroup layout="block" style="padding-right: 15px;">
+                        <p:calendar navigator="true" value="#{leadBean.searchLead.contractEnd}"
+                                    id="endDateFilterId">
+                            <p:ajax event="dateSelect" listener="#{leadBean.validateToDateFilter()}"
+                                    update="@(#globalMessages)"/>
+                        </p:calendar>
+                        <p:commandButton icon="ui-icon-closethick" update="@(#startDateFilterId, #endDateFilterId)"
+                                         style="height: 25px; position: absolute; font-size: 10px!important;"
+                                         title="გამოიყენეთ დროითი ფილტრის გასასუფთავებლად"
+                                         action="#{leadBean.resetDateFilter()}"/>
+                    </h:panelGroup>
+
+                    <p:inputText value="#{leadBean.searchLead.companyName}" id="srchCompNameId"/>
+                    <h:panelGroup layout="block">
+                        <p:inputText value="#{leadBean.searchLead.companyIdentCode}"
+                                     title="გამოიყენეთ მოსანიშნი ცარიელი მნიშვნელობების მოსაძებნად"
+                                     id="srchCompIdentCodeId" style="display: inline-block; "/>
+                        <p:selectBooleanCheckbox value="#{leadBean.emptyIdent}"
+                                                 style="display: inline-block; padding-left: 5px; height: 15px;">
+                            <p:ajax update="@form" listener="#{leadBean.selectEmptyIdents()}"/>
+                        </p:selectBooleanCheckbox>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="display: inline-block">
+                        <p:selectBooleanCheckbox id="callalerts" value="#{leadBean.callAlert}"
+                                                 style="display: inline-block;">
+                            <p:ajax update="@form" listener="#{leadBean.selectCallAlerts()}"/>
+                        </p:selectBooleanCheckbox>
+                        <img title="დარეკვის ალერტით ფილტრი" src="#{request.contextPath}/resources/imgs/smallphone.png"
+                             style="display: inline-block"/>
+                        <span style="font-size: 30px;">|</span>
+                        <p:selectBooleanCheckbox value="#{leadBean.payAlert}" style="display: inline-block">
+                            <p:ajax update="@form" listener="#{leadBean.selectPayAlerts()}"/>
+                        </p:selectBooleanCheckbox>
+                        <img title="დავალიანების ალერტით ფილტრი"
+                             src="#{request.contextPath}/resources/imgs/alert-icon.png"
+                             style=" height: 22px; display: inline-block"/>
+                    </h:panelGroup>
+                    <p:inputText value="#{leadBean.searchLead.department.accountNumber}" id="srchCompaccountNumberId"/>
+
+                    <p:inputText value="#{leadBean.salePercent}" id="srchCompSalePercentId"/>
+                    <p:inputText value="#{leadBean.searchLead.contractCode}" id="srchCompContractCodeId"/>
+
+
+                    <p:selectOneMenu value="#{leadBean.searchLead.davalianeba}">
+                        <f:selectItems value="#{leadBean.contrStatus}"/>
+                        <p:ajax event="change" listener="#{leadBean.filterDavalianeba()}"/>
+                    </p:selectOneMenu>
+
+                    <p:selectOneMenu value="#{leadBean.searchLead.department.departmentId}">
+                        <f:selectItems value="#{leadBean.departmentList}"/>
+                        <p:ajax event="change" listener="#{leadBean.filterDepartment()}"/>
+                    </p:selectOneMenu>
+
+                    <p:selectOneMenu value="#{leadBean.searchLead.saleOrAdminId}">
+                        <f:selectItem itemLabel="სეილით ფილტრი" itemValue=""/>
+                        <f:selectItems value="#{leadBean.usersSelection}"/>
+                        <p:ajax event="change" listener="#{leadBean.filterSaleOrAdmin()}"/>
+                    </p:selectOneMenu>
+
+                    <p:selectOneMenu value="#{leadBean.searchLead.operatorId}">
+                        <f:selectItem itemLabel="ოპერატორით ფილტრი" itemValue=""/>
+                        <f:selectItems value="#{leadBean.usersSelection}"/>
+                        <p:ajax event="change" listener="#{leadBean.filterOperator()}"/>
+                    </p:selectOneMenu>
+
+                    <p:selectOneMenu value="#{leadBean.expiredAlert}">
+                        <f:selectItems value="#{leadBean.alertFilter}"/>
+                        <p:ajax event="change" listener="#{leadBean.filterAlert()}"/>
+                    </p:selectOneMenu>
+
+                    <p:selectOneMenu value="#{leadBean.limitedAlert}">
+                        <f:selectItems value="#{leadBean.limitedFilter}"/>
+                        <p:ajax event="change" listener="#{leadBean.filterLimitedAlert()}"/>
+                    </p:selectOneMenu>
+
+                    <p:inputText value="#{leadBean.searchLead.serviceType}" id="srchCompServiceTypeId"
+                                 rendered="#{utilBean.iurist or utilBean.admin}"/>
+
+                    <p:commandButton value="ძებნა" icon="ui-icon-search" update="@form" action="#{leadBean.init()}"/>
+
+                    <p:selectOneMenu value="#{leadBean.rowLimit}">
+                        <f:selectItems value="#{leadBean.rowCountList}"/>
+                        <p:ajax event="change" update="@form" listener="#{leadBean.rowsCountChangeListener()}"/>
+                    </p:selectOneMenu>
+                    <h:panelGroup layout="block">
+                        <p:selectOneRadio value="#{leadBean.leadStatusId}" rendered="#{!utilBean.operator}"
+                                          style="padding: 0px !important; font-size: 12px; width: 120px;">
+                            <f:selectItem itemValue="0" itemLabel="ყველა"/>
+                            <f:selectItem itemValue="1" itemLabel="აქტიური"/>
+                            <f:selectItem itemValue="2" itemLabel="პასიური"/>
+                            <p:ajax event="change" listener="#{leadBean.handleActivesFilter()}"/>
+                        </p:selectOneRadio>
+                        <p:selectOneRadio value="#{leadBean.leadStatusId}" rendered="#{utilBean.operator}"
+                                          style="padding: 0px !important; font-size: 12px; width: 120px;">
+                            <f:selectItem itemValue="1" itemLabel="აქტიური"/>
+                            <p:ajax event="change" listener="#{leadBean.handleActivesFilter()}"/>
+                        </p:selectOneRadio>
+                    </h:panelGroup>
+
+                    <h:commandLink style="height: 30px; width: 30px;">
+                        <p:graphicImage value="/resources/imgs/excel.png"
+                                        title="xls ფორმატში ექსპორტი(ძებნის შედეგის)"/>
+                        <p:dataExporter type="xls" target="operatorLeadsTableId" fileName="sailLeads" encoding="UTF-8"
+                                        postProcessor="#{leadBean.postProcessXLS}"/>
+                    </h:commandLink>
+                </p:panelGrid>
+            </p:panel>
+
+            <h:panelGroup style="margin: 5px;">
+                <h:outputFormat escape="false" value="#{leadBean.paginator}" class="case-dttbl-paginator-facet"/>
+            </h:panelGroup>
+            <p:dataTable id="operatorLeadsTableId"
+                         emptyMessage="ჩანაწერი არ მოიძებნა"
+                         var="var"
+                         styleClass="mainTableStyleClass"
+                         rowKey="#{var.leadId}"
+                         value="#{leadBean.leads}"
+                         selection="#{leadBean.slctedLead}"
+                         selectionMode="single"
+                         widgetVar="_tblList"
+                         style="max-height: 550px!important; overflow: auto;"
+                         rowStyleClass="#{var.checkLead eq 1 ? 'leadAlert':''}"
+                         currentPageReportTemplate="მოიძებნა ({totalRecords})">
+                <f:facet name="header">
+                </f:facet>
+                <p:column width="50">
+                    <h:panelGroup layout="block" rendered="#{var.callAlert eq 1}" style="display: inline-block;">
+                        <img src="#{request.contextPath}/resources/imgs/call.png" style="width: 20px;"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" rendered="#{var.payAlert eq 1}"
+                                  style="padding-left: 5px; display: inline-block;">
+                        <img src="#{request.contextPath}/resources/imgs/alert-icon.png" style="width: 20px;"/>
+                    </h:panelGroup>
+                </p:column>
+                <p:column headerText="კომპანია">
+                    <h:outputText value="#{var.companyName}"/>
+                </p:column>
+                <p:column headerText="საიდენტ. &#8470;">
+                    <h:outputText value="#{var.companyIdentCode}"/>
+                </p:column>
+                <p:column headerText="ანგარიშის &#8470;">
+                    <h:outputText value="#{var.department.accountNumber}"/>
+                </p:column>
+                <p:column headerText="ფასდაკლ.">
+                    <h:outputText value="-#{var.department.salePercent}%"/>
+                </p:column>
+                <p:column headerText="დავალიან.">
+                    <h:outputText style="width: 100%;" value="#{var.davalianeba eq 1 ? 'კი':'არა' }"/>
+                </p:column>
+                <p:column headerText="დეპარტ." width="130">
+                    <h:outputText value="#{var.department.departmentName}"/>
+                </p:column>
+                <p:column headerText="სეილი">
+                    <h:outputText value="#{var.saleOrAdminName}"/>
+                </p:column>
+                <p:column headerText="ოპერატ.">
+                    <h:outputText value="#{var.operatorName}"/>
+                </p:column>
+                <p:column headerText="დაინტ.დეპარტ." width="50" rendered="#{utilBean.operator or utilBean.sail}">
+                    <h:outputText value="#{var.intrstedIndepartments}"/>
+                </p:column>
+                <p:column headerText="სერვ. ტიპი" rendered="#{utilBean.iurist or utilBean.admin}">
+                    <h:outputText value="#{var.serviceType}"/>
+                </p:column>
+                <p:column headerText="ხელშ." rendered="#{utilBean.operator or utilBean.sail}">
+                    <h:outputText value="#{var.hasContr}"/>
+                </p:column>
+                <p:column headerText="ხელშ. &#8470;">
+                    <h:outputText value="#{var.contractCode}"/>
+                </p:column>
+                <p:column headerText="მოქმედებები" styleClass="#{var.limitedAlarm eq 1 ? 'limitedAlertClass':''}"
+                          exportable="false">
+                    <p:commandButton title="რედაქტირება" rendered="#{!utilBean.operator}"
+                                     action="#{leadBean.initDialog(1)}"
+                                     icon="ui-icon-pencil"
+                                     update="@(#insertDlgFormId)"
+                                     oncomplete="insertDLGwidg.show();">
+                        <f:setPropertyActionListener value="#{var}" target="#{leadBean.slctedLead}"/>
+                    </p:commandButton>
+                    <p:commandButton title="დეტალური ინფორმაცია"
+                                     icon="ui-icon-clipboard" action="#{leadBean.loadLeadDepartList()}"
+                                     update="@(#fullInfoDlgFormId)"
+                                     oncomplete="fullInfoDlg.show();">
+                        <f:setPropertyActionListener value="#{var}" target="#{leadBean.slctedLead}"/>
+                    </p:commandButton>
+                    <p:commandButton title="სტატუსის პასიურზე გადაყვანა"
+                                     rendered="#{var.isActive eq 1 and !utilBean.operator}"
+                                     icon="ui-icon-closethick"
+                                     oncomplete="confirmOfChangeStatus.show();">
+                        <f:setPropertyActionListener value="#{var}" target="#{leadBean.slctedLead}"/>
+                    </p:commandButton>
+                    <p:commandButton title="სტატუსის აქტიურზე გადაყვანა"
+                                     rendered="#{var.isActive eq 2 and !utilBean.operator}"
+                                     icon="ui-icon-check"
+                                     oncomplete="confirmEnableStatus.show();">
+                        <f:setPropertyActionListener value="#{var}" target="#{leadBean.slctedLead}"/>
+                    </p:commandButton>
+                    <p:commandButton title="წაშლა" rendered="#{utilBean.iurist or utilBean.admin}"
+                                     icon="ui-icon-trash"
+                                     oncomplete="confirmOfLeadDeletion.show();">
+                        <f:setPropertyActionListener value="#{var}" target="#{leadBean.slctedLead}"/>
+                    </p:commandButton>
+                </p:column>
+                <p:ajax event="rowDblselect" update="@(#fullInfoDlgFormId)" listener="#{leadBean.loadLeadDepartList()}"
+                        oncomplete="fullInfoDlg.show();"/>
+                <f:facet name="footer" class="case-dttbl-paginator-facet">
+                </f:facet>
+            </p:dataTable>
+            <h:panelGroup style="margin: 5px;">
+                <h:outputFormat escape="false" value="#{leadBean.paginator}" class="case-dttbl-paginator-facet"/>
+            </h:panelGroup>
+            <h:panelGroup style="float: right; margin-right: 50px;margin-top: 5px;">
+                <table>
+                    <tr>
+                        <td style="background-color: #ff945f; width: 60px; height: 20px;"
+                            title="ხელშეკრულების ვადის გასვლა"/>
+                        <td class="limitedAlertClass" style="width: 60px; height: 20px;"
+                            title="ლიმიტირებული ხელშეკრულება რომლის ბალანსი ჩამოცდა 30-ს"/>
+                    </tr>
+                </table>
+            </h:panelGroup>
+
+            <p:confirmDialog width="550" message="დარწმუნებული ხართ რომ გსურთ ჩანაწერის წაშლა?"
+                             rendered="#{!utilBean.operator}"
+                             header="ინფორმაციის წაშლა" severity="alert" widgetVar="confirmOfLeadDeletion">
+                <p:commandButton value="დიახ" update="@form" action="#{leadBean.deleteLead()}"/>
+                <p:commandButton value="არა" onclick="confirmOfLeadDeletion.hide();"/>
+            </p:confirmDialog>
+            <p:confirmDialog width="550" rendered="#{!utilBean.operator}" message="სტატუსის შეცვლა გულისხმობს მის აქტიურიდან პასიურზე გადაყვანას
+                                 რის შემდეგაც მოცემულ ჩანაწერზე აღარ იქნება გაფრთხილება ხელშეკრულების ვადის ამოწურვის შესახებ"
+                             header="სტატუსის შეცვლა" severity="alert" widgetVar="confirmOfChangeStatus">
+                <p:commandButton value="შესრულება" update="@form" action="#{leadBean.disableLead()}"/>
+                <p:commandButton value="გაუქმება" onclick="confirmOfChangeStatus.hide();"/>
+            </p:confirmDialog>
+            <p:confirmDialog width="550" rendered="#{!utilBean.operator}"
+                             message="სტატუსის შეცვლა - პასიურიდან აქტიურზე"
+                             header="სტატუსის შეცვლა" severity="alert" widgetVar="confirmEnableStatus">
+                <p:commandButton value="შესრულება" update="@form" action="#{leadBean.enableLead()}"/>
+                <p:commandButton value="გაუქმება" onclick="confirmEnableStatus.hide();"/>
+            </p:confirmDialog>
+        </h:form>
+
+        <p:ajaxStatus style="width:44px;height:44px;position:fixed;right:95%;bottom:95%;">
+            <f:facet name="start">
+                <p:graphicImage value="/resources/imgs/loading1.GIF"/>
+            </f:facet>
+            <f:facet name="complete">
+                <h:outputText value=""/>
+            </f:facet>
+        </p:ajaxStatus>
+
+        <p:dialog widgetVar="smsDLGwidg" position="top" modal="true" id="smsDlgId"
+                  style="max-height: 600px; overflow: auto;"
+                  header="შეტყობინების გაგზავნა" resizable="false" width="700">
+            <h:form id="smsDlgFormId" prependId="false" enctype="multipart/form-data">
+                <p:growl id="smsgrowlid" showDetail="true" life="5000"/>
+                <p:panelGrid id="smsPnlGridId" columns="2" style="width: 100%;
+                             margin-top: 10px;" styleClass="pnlGridClass">
+
+                    <h:outputLabel value="გაგზავნის მეთოდი"/>
+                    <h:selectOneRadio styleClass="radioTable" value="#{leadBean.contaction.smsOrMail}">
+                        <p:ajax update="@(#smsPnlGridId2)" event="change"/>
+                        <f:selectItem itemValue="1" itemLabel="SMS"/>
+                        <f:selectItem itemValue="2" itemLabel="Email"/>
+                    </h:selectOneRadio>
+
+                    <h:outputLabel value="ადრესატის ტიპი"/>
+                    <h:selectOneRadio styleClass="radioTable" value="#{leadBean.contaction.smsOrMailToSrchedOrOne}">
+                        <p:ajax event="change" update="@(#smsPnlGridId2, #smsgrowlid)"
+                                listener="#{leadBean.warnForFilteredAdressats()}"/>
+                        <f:selectItem itemValue="1" itemLabel="ინდივიდ."/>
+                        <f:selectItem itemValue="2" itemLabel="ძებნის შედეგი"/>
+                    </h:selectOneRadio>
+                </p:panelGrid>
+                <p:panelGrid id="smsPnlGridId2" columns="2" style="width: 100%;
+                             margin-top: 10px;" styleClass="pnlGridClass">
+
+                    <h:outputLabel value="ადრესატი(ები)"
+                                   rendered="#{leadBean.contaction.smsOrMailToSrchedOrOne eq 1}"/>
+                    <h:panelGroup layout="block" rendered="#{leadBean.contaction.smsOrMailToSrchedOrOne eq 1}">
+                        <p:watermark value="SMS(9955.. , 9955..) | Email(mail1@com, mail2@com, ...)" for="toInputId"/>
+                        <p:inputText value="#{leadBean.contaction.smsOrMailTo}" id="toInputId"
+                                     rendered="#{leadBean.contaction.smsOrMailToSrchedOrOne eq 1}"/>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="საგანი(Subject)" rendered="#{leadBean.contaction.smsOrMail eq 2}"/>
+                    <p:inputText value="#{leadBean.contaction.smsOrMailSubject}"
+                                 rendered="#{leadBean.contaction.smsOrMail eq 2}"/>
+
+                    <h:outputLabel value="მესიჯი"/>
+                    <p:inputTextarea autoResize="false" style=" height: 70px;"
+                                     value="#{leadBean.contaction.smsOrMailText}"/>
+
+                    <h:outputLabel value="ატვირთული დოკუმენტი(ები)"
+                                   rendered="#{leadBean.contaction.smsOrMail eq 2}"/>
+                    <p:dataTable id="smsDocsTableId" value="#{leadBean.contaction.attachmentsPath}"
+                                 var="docVar1"
+                                 selection="#{leadBean.slctedAttachName}"
+                                 selectionMode="single"
+                                 rowIndexVar="rowIndex"
+                                 rowKey="#{rowIndex}"
+                                 emptyMessage="დოკუმენტი არ ატვირთულა"
+                                 rendered="#{leadBean.contaction.smsOrMail eq 2}">
+                        <p:column headerText="დოკ.სახელი" width="300">
+                            <h:outputText value="#{docVar1}"/>
+                        </p:column>
+                        <p:column headerText="X">
+                            <p:commandButton action="#{leadBean.delWrongAttachment()}"
+                                             icon="ui-icon-trash"
+                                             update="@(#smsDocsTableId)">
+                                <f:setPropertyActionListener value="#{docVar1}"
+                                                             target="#{leadBean.slctedAttachName}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+
+                    <h:outputLabel value="ფაილის მიმაგრება" rendered="#{leadBean.contaction.smsOrMail eq 2}"/>
+                    <p:fileUpload fileUploadListener="#{leadBean.uploadAttachments}"
+                                  rendered="#{leadBean.contaction.smsOrMail eq 2}"
+                                  cancelLabel="გაუქმება"
+                                  uploadLabel="მიმაგრება"
+                                  invalidFileMessage="ფაილის ფორმატი არასწორია, დაშვებულია: pdf|gif|jpe?g|png|doc?x|xls?x"
+                                  invalidSizeMessage="ფაილი მეტისმეტად დიდი ზომისაა"
+                                  label="ფაილის არჩევა"
+                                  mode="advanced"
+                                  dragDropSupport="false"
+                                  update="smsgrowlid, smsDocsTableId"
+                                  multiple="true"
+                                  widgetVar="filWar1"
+                                  sizeLimit="100000000"
+                                  allowTypes="/(\.|\/)(pdf|gif|jpe?g|png|doc?x|xls?x)$/"/>
+                </p:panelGrid>
+
+                <p:panelGrid columns="2" style="width: 100%; margin-top: 0px;" styleClass="pnlGridClass">
+                    <p:commandButton value="დახურვა"
+                                     icon="ui-icon-close"
+                                     style=" font-weight: normal !important; font-size: 14px!important;"
+                                     onclick="smsDLGwidg.hide();"/>
+                    <h:panelGroup layout="block">
+                        <center>
+                            <p:commandButton id="submitsdfsDialoasdasg"
+                                             value="გაგზავნა"
+                                             action="#{leadBean.sendSmsOrMail()}"
+                                             icon="ui-icon-mail-closed"
+                                             widgetVar="leadsavewidget23"
+                                             onclick="leadsavewidget23.disable();"
+                                             oncomplete="leadsavewidget23.enable();"
+                                             update="@(#smsgrowlid)"
+                                             style=" font-weight: normal !important; font-size: 18px!important; width: 70%;"/>
+                        </center>
+                    </h:panelGroup>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="limitHistDLGwidg" position="center" modal="true"
+                  id="limitHistDlgId" header="გამოყენებული ლიმიტების ისტორია"
+                  height="550" resizable="false">
+            <h:form id="limitHistDlgFormId" prependId="false">
+                <p:growl id="limitHistDlggrowlid" showDetail="true" life="5000"/>
+
+                <p:dataTable id="limitHistTableIdi"
+                             value="#{leadBean.leadsLimitHitoryList}"
+                             var="limVar"
+                             selection="#{leadBean.slctedLeadsLimit}"
+                             selectionMode="single"
+                             rowKey="#{limVar.id}"
+                             emptyMessage="">
+                    <p:column headerText="ID">
+                        <h:outputText value="#{limVar.id}"/>
+                    </p:column>
+                    <p:column headerText="საწყისი თანხა">
+                        <h:outputText value="#{limVar.startAmount}"/>
+                    </p:column>
+                    <p:column headerText="გამოკლებული თანხა">
+                        <h:outputText value="#{limVar.decreaseAmount}"/>
+                    </p:column>
+                    <p:column headerText="დარჩენილი თანხა">
+                        <h:outputText value="#{limVar.leftAmount}"/>
+                    </p:column>
+                    <p:column headerText="თარიღი">
+                        <h:outputText value="#{limVar.strCreateDate}"/>
+                    </p:column>
+                    <p:column headerText="X">
+                        <p:commandButton action="#{leadBean.delLimitHistory()}"
+                                         icon="ui-icon-trash"
+                                         update="@(#limitHistTableIdi, #limitHistDlggrowlid, #limitiPnlGridId)">
+                            <f:setPropertyActionListener value="#{limVar}" target="#{leadBean.slctedLeadsLimit}"/>
+                        </p:commandButton>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="insertDLGwidg" position="center" modal="true" id="insertDlgId"
+                  header="დამატება/რედაქტირება" height="550" resizable="false" width="700">
+            <h:form id="insertDlgFormId" prependId="false" enctype="multipart/form-data">
+                <p:growl id="newSealgrowlid" showDetail="true" life="5000"/>
+
+                <p:panelGrid id="insertPnlGridId2" columns="2" style="width: 100%; margin-top: 10px;"
+                             styleClass="pnlGridClass">
+                    <f:facet name="header">
+                        <h:outputText value="მომხმარებელი" style="width: 100%;"/>
+                    </f:facet>
+
+                    <h:outputLabel value="არსებული კომპანია" rendered="#{!leadBean.edit and !utilBean.operator}"/>
+                    <h:panelGroup layout="block" rendered="#{!leadBean.edit and !utilBean.operator}">
+                        <p:watermark for="existingLeadIdentCodeInputId" value="კომპანიის საიდენტიფიკაციო კოდი"/>
+                        <p:inputText id="existingLeadIdentCodeInputId" onkeypress="validate(event);"
+                                     value="#{leadBean.existingLeadIdentCode}" style="width: 80%!important;"/>
+                        <p:commandButton value="" style="height: 0.1px; width: 0.1px;"/>
+                        <p:commandButton icon="ui-icon-search" action="#{leadBean.loadExistingLeadData()}"
+                                         style="margin-left: 20px; width: 50px;" update="@form"/>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="საიდენტიფიკაციო*"/>
+                    <p:inputText value="#{leadBean.slctedLead.companyIdentCode}" onkeypress="validate(event);"/>
+
+                    <h:outputLabel value="კომპანიის დასახელება*"/>
+                    <p:inputText value="#{leadBean.slctedLead.companyName}"/>
+
+                    <h:outputLabel value="კომპანიის მისამართი*"/>
+                    <p:inputText value="#{leadBean.slctedLead.address}"/>
+
+                    <h:outputLabel value="საკონტაქტო პირი"/>
+                    <p:inputText value="#{leadBean.slctedLead.contactPerson}"/>
+
+                    <h:outputLabel value="ტელეფონის ნომერი"/>
+                    <p:inputText value="#{leadBean.slctedLead.phone}"/>
+
+                    <h:outputLabel value="ელ.ფოსტა"/>
+                    <p:inputText value="#{leadBean.slctedLead.email}"/>
+
+                    <h:outputLabel value="დაინტერესებულია დეპარტამენტით(ებით)"
+                                   rendered="#{!leadBean.edit and utilBean.operator}"/>
+                    <h:panelGroup layout="block" styleClass="interestedDepartsStyleClass"
+                                  rendered="#{!leadBean.edit and utilBean.operator}">
+                        <p:selectCheckboxMenu label="დეპარტამენტები" id="inerstdDeptsId"
+                                              value="#{leadBean.interestedDepartments}">
+                            <f:selectItems value="#{leadBean.interstDepartmentList}"/>
+                        </p:selectCheckboxMenu>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="შენიშვნა"/>
+                    <p:inputTextarea autoResize="false" style=" height: 70px;" value="#{leadBean.slctedLead.note}"/>
+
+                    <h:outputLabel value="ვამატებ როგორც" rendered="#{leadBean.hasPermissionChooser}"/>
+                    <p:selectOneMenu value="#{leadBean.slctedLead.permissionId}"
+                                     rendered="#{leadBean.hasPermissionChooser}" style="width: 140px !important;">
+                        <f:selectItem itemValue="3" itemLabel="იურისტი"/>
+                        <f:selectItem itemValue="4" itemLabel="ადმინისტრატორი"/>
+                    </p:selectOneMenu>
+
+                </p:panelGrid>
+
+                <p:panelGrid id="limitiPnlGridId" columns="2" style="width: 100%; margin-top: 10px;"
+                             rendered="#{!utilBean.operator}" styleClass="pnlGridClass">
+                    <f:facet name="header">
+                        <h:outputText value="ლიმიტირება" style="width: 100%;"/>
+                    </f:facet>
+                    <h:outputLabel value="ლიმიტირებული ხელშეკრულება*"/>
+                    <h:selectOneRadio styleClass="radioTable" value="#{leadBean.slctedLead.limited}">
+                        <p:ajax update="@(#limitiPnlGridId)"/>
+                        <f:selectItem itemValue="1" itemLabel="კი"/>
+                        <f:selectItem itemValue="2" itemLabel="არა"/>
+                    </h:selectOneRadio>
+
+                    <h:outputLabel value="მაქს. ათვისებადი ლიმიტი" rendered="#{leadBean.slctedLead.limited == 1}"/>
+                    <p:inputText value="#{leadBean.slctedLead.maxLimitAmount}"
+                                 rendered="#{leadBean.slctedLead.limited == 1}"/>
+
+                    <h:outputLabel value="გამოყენებული თანხა" rendered="#{leadBean.slctedLead.limited == 1}"/>
+                    <h:panelGroup layout="block" rendered="#{leadBean.slctedLead.limited == 1}">
+                        <p:watermark for="decreaseInputId" value="მიუთითეთ თანხა"/>
+                        <p:inputText value="#{leadBean.limitDecreaseAmount}" id="decreaseInputId"
+                                     style="width: 60%!important;" onkeypress="validate(event);"/>
+                        <p:commandButton icon="ui-icon-disk" value="შესრულება" id="saveLImitsBtnId"
+                                         action="#{leadBean.saveLimitHistory()}"
+                                         style="margin-left: 20px;" update="@(#limitiPnlGridId, #newSealgrowlid)"/>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="ისტორია" rendered="#{leadBean.slctedLead.limited == 1}"/>
+                    <p:commandButton value="მაჩვენე ისტორია" action="#{leadBean.loadLeadLimitHistory()}"
+                                     rendered="#{leadBean.slctedLead.limited == 1}"
+                                     icon="ui-icon-arrowthickstop-1-s" update="@(#limitHistDlgFormId)"
+                                     oncomplete="limitHistDLGwidg.show();"/>
+
+                </p:panelGrid>
+
+                <p:panelGrid columns="2" style="width: 100%; margin-top: 10px;" rendered="#{!utilBean.operator}"
+                             styleClass="pnlGridClass">
+                    <f:facet name="header">
+                        <h:outputText value="სერვისი" style="width: 100%;"/>
+                    </f:facet>
+
+                    <h:outputLabel value="სურს ხელშეკრ. დადება*"/>
+                    <h:selectOneRadio styleClass="radioTable" value="#{leadBean.slctedLead.answerId}">
+                        <f:selectItem itemValue="1" itemLabel="კი"/>
+                        <f:selectItem itemValue="2" itemLabel="არა"/>
+                    </h:selectOneRadio>
+
+                    <h:outputLabel value="ხელშეკრულების ნომერი*"/>
+                    <p:inputText value="#{leadBean.slctedLead.contractCode}"/>
+
+                    <h:outputLabel value="ანგარიშის ნომერი"/>
+                    <p:inputText value="#{leadBean.slctedLead.department.accountNumber}"/>
+
+                    <h:outputLabel value="სერვისის ტიპი"/>
+                    <p:inputText value="#{leadBean.slctedLead.serviceType}"/>
+
+                    <h:outputLabel value="ფასდაკლება"/>
+                    <h:panelGroup layout="block" style="width: 100%;">
+                        <p:inputText value="#{leadBean.slctedLead.department.salePercent}"
+                                     style="width: 50px!important;"
+                                     title="მიუთითეთ ფასდაკლების პროცენტული მაჩვენებელი"/>
+                        <h:outputText value=" %"/>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="ხელშეკრულების ვადა*"/>
+                    <h:panelGroup id="yearsDifferenceOutId" layout="block" style="width: 100%;">
+                        <p:watermark value="დან" for="addConctrStartDateId"/>
+                        <p:watermark value="მდე" for="addConctrEndDateId"/>
+                        <p:calendar navigator="true" value="#{leadBean.slctedLead.contractStart}" yearRange="c-70:c+10"
+                                    effect="slideDown" id="addConctrStartDateId">
+                            <p:ajax event="dateSelect" listener="#{leadBean.validateInsertFromDate()}"
+                                    update="@(#newSealgrowlid, #yearsDifferenceOutId)"/>
+                        </p:calendar>
+                        <p:calendar navigator="true" value="#{leadBean.slctedLead.contractEnd}" yearRange="c-70:c+10"
+                                    effect="slideDown" id="addConctrEndDateId">
+                            <p:ajax event="dateSelect" listener="#{leadBean.validateContrDaies()}"
+                                    update="@(#newSealgrowlid, #yearsDifferenceOutId)"/>
+                        </p:calendar><br/>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="შემდეგი დარეკვის თარიღი"/>
+                    <p:calendar navigator="true" value="#{leadBean.slctedLead.nextCall}" yearRange="c-70:c+10"
+                                effect="slideDown" id="nextCallInputClass"/>
+
+                    <h:outputLabel value="დავალიანება*"/>
+                    <h:selectOneRadio styleClass="radioTable" value="#{leadBean.slctedLead.davalianeba}">
+                        <f:selectItem itemValue="1" itemLabel="#{utilBean.ka('ki')}"/>
+                        <f:selectItem itemValue="2" itemLabel="#{utilBean.ka('ara')}"/>
+                    </h:selectOneRadio>
+
+                    <h:outputLabel value="ვადის ტიპი"/>
+                    <h:selectOneRadio styleClass="radioTable" value="#{leadBean.slctedLead.termType}">
+                        <f:selectItem itemValue="1" itemLabel="ავტომატური"/>
+                        <f:selectItem itemValue="2" itemLabel="გამორთვა"/>
+                    </h:selectOneRadio>
+
+                    <h:outputLabel value="დაამატეთ დეპარტამენტი(ები)" rendered="#{!utilBean.operator}"/>
+                    <h:panelGroup layout="block" styleClass="interestedDepartsStyleClass"
+                                  rendered="#{!utilBean.operator}">
+                        <p:selectCheckboxMenu label="დეპარტამენტები" value="#{leadBean.interestedDepartments}">
+                            <f:selectItems value="#{leadBean.interstDepartmentList}"/>
+                        </p:selectCheckboxMenu>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="არსებული დეპარტამენტი(ები)"/>
+                    <p:dataTable id="sailDocsTableIdi" value="#{leadBean.slctedLead.departments}"
+                                 var="dpVar"
+                                 selection="#{leadBean.selectedDepartment}"
+                                 selectionMode="single"
+                                 rowKey="#{dpVar.leadDepartmentId}"
+                                 emptyMessage="">
+                        <f:facet name="header">
+                            <p:commandButton style="float: left; margin-left: 10px;"
+                                             icon="ui-icon-arrowthickstop-1-s"
+                                             value="ჩატვირთვა"
+                                             action="#{leadBean.loadLeadDepartList()}"
+                                             update="@(#sailDocsTableIdi)"/>
+                        </f:facet>
+                        <p:column headerText="ID">
+                            <h:outputText value="#{dpVar.leadDepartmentId}"/>
+                        </p:column>
+                        <p:column headerText="დეპარტამენტი">
+                            <h:outputText value="#{dpVar.departmentName}"/>
+                        </p:column>
+                        <p:column headerText="X">
+                            <p:commandButton action="#{leadBean.delSailDepart()}"
+                                             icon="ui-icon-trash"
+                                             update="@(#sailDocsTableIdi)">
+                                <f:setPropertyActionListener value="#{dpVar}" target="#{leadBean.selectedDepartment}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                    <h:outputLabel value="ატვირთული დოკუმენტი(ები)"/>
+                    <p:dataTable id="sailDocsTableId" value="#{leadBean.slctedLead.documents}"
+                                 var="docVar"
+                                 selection="#{leadBean.slcedDoc}"
+                                 selectionMode="single"
+                                 rowIndexVar="rowIndex"
+                                 rowKey="#{rowIndex}"
+                                 emptyMessage="დოკუმენტი არ ატვირთულა">
+                        <p:column headerText="დოკ.სახელი">
+                            <h:outputText value="#{docVar.documentName}"/>
+                        </p:column>
+                        <p:column headerText="X">
+                            <p:commandButton action="#{leadBean.delWrongDoc()}"
+                                             icon="ui-icon-trash"
+                                             update="@(#sailDocsTableId)">
+                                <f:setPropertyActionListener value="#{docVar}" target="#{leadBean.slcedDoc}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+
+                    <h:outputLabel value="#{utilBean.ka('xelSekrulebis dokumenti')}*"/>
+                    <p:fileUpload fileUploadListener="#{leadBean.uploadContract}"
+                                  cancelLabel="#{utilBean.ka('gauqmeba')}"
+                                  uploadLabel="#{utilBean.ka('atvirTva')}"
+                                  invalidFileMessage="ფაილის ფორმატი არასწორია, დაშვებულია: pdf|gif|jpe?g|png|doc?x|xls?x"
+                                  invalidSizeMessage="ფაილი მეტისმეტად დიდი ზომისაა"
+                                  requiredMessage="ამონაწერის ატვირთვა სავალდებულოა"
+                                  label="#{utilBean.ka('arCeva')}"
+                                  mode="advanced"
+                                  dragDropSupport="false"
+                                  update="newSealgrowlid, sailDocsTableId"
+                                  multiple="true"
+                                  widgetVar="filWar"
+                                  sizeLimit="100000000"
+                                  allowTypes="/(\.|\/)(pdf|gif|jpe?g|png|doc?x|xls?x)$/"/>
+
+                </p:panelGrid>
+                <p:panelGrid columns="2" style="width: 100%; margin-top: 0px;" styleClass="pnlGridClass">
+                    <p:commandButton value="დახურვა"
+                                     icon="ui-icon-close"
+                                     style=" font-weight: normal !important; font-size: 14px!important;"
+                                     onclick="insertDLGwidg.hide();"/>
+                    <h:panelGroup layout="block">
+                        <center>
+                            <p:commandButton id="submitsdfsDialog"
+                                             value="დამახსოვრება"
+                                             action="#{leadBean.saveUpdate()}"
+                                             icon="ui-icon-disk"
+                                             widgetVar="leadsavewidget"
+                                             onclick="leadsavewidget.disable();"
+                                             oncomplete="leadsavewidget.enable();"
+                                             update="@(#operHomeForm)"
+                                             style=" font-weight: normal !important; font-size: 18px!important; width: 70%;"/>
+                        </center>
+                    </h:panelGroup>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="fullInfoDlg" modal="true" styleClass="insertDialogStyleClass"
+                  height="600" id="fullInfoDlgId" header="დეტალური ინფორმაცია" resizable="false" width="700">
+            <h:form id="fullInfoDlgFormId">
+                <p:panelGrid id="pnlGridId1" columns="2" style="width: 100%;" styleClass="pnlGridClass">
+
+                    <f:facet name="header">
+                        <h:outputText value="მომხმარებელი" style="width: 100%;"/>
+                    </f:facet>
+
+                    <h:outputLabel value="კომპანია:"/>
+                    <h:outputText value="#{leadBean.slctedLead.companyName}" style="width: 100%;"/>
+
+                    <h:outputLabel value="საიდენტიფიკაციო კოდი:"/>
+                    <h:outputText value="#{leadBean.slctedLead.companyIdentCode}"/>
+
+                    <h:outputLabel value="საკონტაქტო პირი:"/>
+                    <h:outputText value="#{leadBean.slctedLead.contactPerson}" style="width: 100%;"/>
+
+                    <h:outputLabel value="ტელეფონი:"/>
+                    <h:outputText value="#{leadBean.slctedLead.phone}" style="width: 100%;"/>
+
+                    <h:outputLabel value="ელ.ფოსტა:"/>
+
+                    <a href="mailto:#{leadBean.slctedLead.email}" target="_top"
+                       style="width: 490px!important;">#{leadBean.slctedLead.email}</a>
+
+                    <h:outputLabel value="დაინტერესების თარიღი:"/>
+                    <h:outputText value="#{leadBean.slctedLead.dateofInterest}" style="width: 100%;"/>
+
+                    <h:outputLabel value="შემდეგი დარეკვის თარიღი:"/>
+                    <h:outputText value="#{leadBean.slctedLead.nextCall}" style="width: 100%;"/>
+
+                    <h:outputLabel value="მისამართი"/>
+                    <h:outputText value="#{leadBean.slctedLead.address}" style="width: 100%;"/>
+
+                    <h:outputLabel value="მიმღები ოპერატორი:"/>
+                    <h:outputText value="#{leadBean.slctedLead.operatorName}" style="width: 100%;"/>
+
+                    <h:outputLabel value="მიმღები სეილი:"/>
+                    <h:outputText value="#{leadBean.slctedLead.saleOrAdminName}" style="width: 100%;"/>
+
+                    <h:outputLabel value="დაინტერესებულია:"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.intrstedIndepartments}"/>
+
+                </p:panelGrid>
+
+                <p:panelGrid columns="2" style="width: 100%;margin-top: 10px;" styleClass="pnlGridClass">
+
+                    <f:facet name="header">
+                        <h:outputText value="სერვისი" style="width: 100%;"/>
+                    </f:facet>
+
+                    <h:outputLabel value="სტატუსი"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.active}"/>
+
+                    <h:outputLabel value="სერვისის ტიპი:" rendered="#{utilBean.iurist}"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.serviceType}"
+                                  rendered="#{utilBean.iurist}"/>
+
+                    <h:outputLabel value="დავალიანება:"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.davalianeba eq 1 ? 'კი':'არა' }"/>
+
+                    <h:outputLabel value="ლიმიტირებულია?"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.limited eq 1 ? 'კი':'არა'}"/>
+
+                    <h:outputLabel value="ლიმიტი" rendered="#{leadBean.slctedLead.limited eq 1}"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.maxLimitAmount}"
+                                  rendered="#{leadBean.slctedLead.limited eq 1}"/>
+
+                    <h:outputLabel value="ვადის ტიპი"/>
+                    <h:outputText style="width: 100%;"
+                                  value="#{leadBean.slctedLead.termType eq 1 ? 'ავტომატური':'მექანიკური'}"/>
+
+                    <h:outputLabel value="ხელშეკრულების ნომერი"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.contractCode}"/>
+
+                    <h:outputLabel value="სახელშეკრულებო დეპარტამენტი(ები):"/>
+                    <h:panelGroup layout="block" style="width: 100%;">
+                        <ul>
+                            <ui:repeat value="#{leadBean.slctedLead.departments}" var="depVar">
+                                <li><h:outputText value="#{depVar.departmentName}"/></li>
+                            </ui:repeat>
+                        </ul>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="ანგარიშის ნომერი:"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.department.accountNumber}"/>
+
+                    <h:outputLabel value="ფასდაკლება:"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.department.salePercent} %"/>
+
+                    <h:outputLabel value="ხელშეკრულება დაიდო:"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.strContractStart}"/>
+
+                    <h:outputLabel value="ხელშეკრულება მთავრდება:"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.strContractEnd}"/>
+
+                    <h:outputLabel value="ხელშეკრულების დოკუმენტი(ები):"/>
+                    <h:panelGroup layout="block" style="width: 100%;">
+                        <ul>
+                            <ui:repeat value="#{leadBean.slctedLead.documents}" var="docVar">
+                                <li><a href="http://2.240.0.12/uploads/#{docVar.documentName}"
+                                       target="_blank">#{docVar.documentName}</a></li>
+                            </ui:repeat>
+                        </ul>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="შენიშვნა:"/>
+                    <h:outputText style="width: 100%;" value="#{leadBean.slctedLead.note}"/>
+
+                </p:panelGrid>
+                <p:commandButton value="დახურვა" icon="ui-icon-close"
+                                 style=" float: right; font-weight: normal !important; margin-top: 5px;font-size: 14px;"
+                                 onclick="fullInfoDlg.hide();"/>
+                <p:commandButton value="რედაქტირება" update="@(#insertDlgFormId)"
+                                 oncomplete="insertDLGwidg.show();fullInfoDlg.hide();" icon="ui-icon-pencil"
+                                 rendered="#{!utilBean.operator}"
+                                 style=" float: left; font-weight: normal !important; margin-top: 5px;font-size: 14px;"/>
+            </h:form>
+        </p:dialog>
+        <script>
+
+            function validate(evt) {
+                var theEvent = evt || window.event;
+                var key = theEvent.keyCode || theEvent.which;
+                key = String.fromCharCode(key);
+                var regex = /[0-9_ ]|\;/;
+                if (!regex.test(key)) {
+                    theEvent.returnValue = false;
+                    if (theEvent.preventDefault)
+                        theEvent.preventDefault();
+                }
+            }
+        </script>
+    </ui:define>
+</ui:composition>
+</html>

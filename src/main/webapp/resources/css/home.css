@@ -1,0 +1,145 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #F9F5FD;
+    font-size: 14px;
+}
+
+.ui-state-error {
+    background: none !important;
+    color: #362b36 !important;
+}
+
+.ui-growl-item {
+    font-size: 14px;
+}
+
+.ui-button-text {
+    font-weight: normal;
+}
+
+.mainTableStyleClass .ui-datatable-header {
+    background: #f6a828;
+    height: 36px;
+}
+
+.pnlGridClass tr td:first-child {
+    width: 37%;
+    text-align: center;
+}
+
+.ui-widget-header {
+    color: #3F6A8F;
+    text-decoration: none;
+}
+
+span.case-dttbl-paginator-facet {
+    height: 30px;
+    display: block;
+}
+
+.ui-button .ui-button-text {
+    font-family: normal;
+    font-size: 14px;
+}
+
+.ui-selectonemenu {
+    font-family: normal;
+    font-size: 14px !important;
+}
+
+.ui-inputfield {
+    font-family: normal;
+    font-size: 14px !important;
+}
+
+.ui-fieldset-toggleable .ui-fieldset-legend {
+    font-size: 14px !important;
+    font-weight: normal !important;
+}
+
+#operatorLeadsTableId table {
+    text-align: center;
+    font-size: 12px !important;
+}
+
+#departsDataTableId table {
+    text-align: center;
+}
+
+#usersDataTableId table {
+    text-align: center;
+}
+
+.ui-selectonemenu .ui-selectonemenu-label {
+    width: 100% !important;
+}
+
+.ui-fileupload-files {
+    border: cyan;
+}
+
+.radioTable tr td {
+    width: 150px !important;
+    border: none;
+}
+
+.pnlGridClass tr td input[type="text"], .pnlGridClass tr td .ui-selectonemenu, .pnlGridClass tr td textarea {
+    width: 100% !important;
+}
+
+#addConctrStartDateId_input {
+    width: 40% !important;
+}
+
+#addConctrEndDateId_input {
+    margin-left: 10px;
+    width: 40% !important;
+}
+
+.interestedDepartsStyleClass tr td {
+    border: none;
+}
+
+#sailDocsTableId table {
+    font-size: 14px;
+    text-align: center;
+}
+
+.fileupload-content table {
+    border-color: cyan !important;
+}
+
+.filterCalendarsStyleClass input {
+    width: 68px;
+}
+
+.leadAlert td {
+    /*background-color: #6CE26C !important;*/
+    background-color: #ff945f;
+}
+
+.limitedAlertClass {
+    background-color: #6CE26C !important;
+}
+
+.ui-column-filter {
+    width: 90px !important;
+}
+
+.filtersgridStyleClass tr td {
+    background: #eeeeee url("/dhl/javax.faces.resource/images/ui-bg_highlight-soft_100_eeeeee_1x100.png.jsf?ln=primefaces-ui-lightness") 50% top repeat-x;
+    border: none !important;
+}
+
+.filtersgridStyleClass {
+    background: #eeeeee url("/dhl/javax.faces.resource/images/ui-bg_highlight-soft_100_eeeeee_1x100.png.jsf?ln=primefaces-ui-lightness") 50% top repeat-x;
+}
+
+#activeSelectionId tr td {
+    padding: 0px !important;
+}
+
+#nextCallInputClass input {
+    width: 50% !important;
+}

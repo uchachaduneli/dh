@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>მოგესალმებით</title>
+    <meta name="viewport" content="width=device-width"/>
+    <style>
+        body {
+            background-image: url('#{request.contextPath}/resources/imgs/background.jpg');
+            background-color: cyan;
+        }
+
+        .glow {
+            display: inline-block;
+            -webkit-transition-duration: 0.3s;
+            transition-duration: 0.3s;
+            -webkit-transition-property: box-shadow;
+            transition-property: box-shadow;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            box-shadow: 0 0 1px rgba(0, 0, 0, 0);
+        }
+
+        .glow:hover, .glow:focus, .glow:active {
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .shrink {
+            display: inline-block;
+            -webkit-transition-duration: 0.3s;
+            transition-duration: 0.3s;
+            -webkit-transition-property: transform;
+            transition-property: transform;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            box-shadow: 0 0 1px rgba(0, 0, 0, 0);
+        }
+
+        .shrink:hover, .shrink:focus, .shrink:active {
+            -webkit-transform: scale(0.9);
+            transform: scale(0.9);
+        }
+
+        a:link {
+            text-decoration: none;
+            color: grey;
+        }
+
+        a:visited {
+            text-decoration: none;
+            color: grey;
+        }
+    </style>
+    <link href="#{request.contextPath}/resources/imgs/indexfavicon.png" rel="icon" type="image/png"/>
+    <link href="#{request.contextPath}/resources/imgs/indexfavicon.png" rel="shortcut icon" type="image/png"/>
+</head>
+<body style="background: #{request.contextPath}/resources/imgs/background.jpg">
+<table style="width:800px; margin-left: auto; margin-right: auto;margin-top: 100px; ">
+    <tr>
+        <td>
+            <a href="#{request.contextPath}/login.xhtml" style="float: right;" class="shrink">
+                <div>
+                    <img src="#{request.contextPath}/resources/imgs/dhltransparent.png"/>
+                    <center><i><span>ხელშეკრულებები</span></i></center>
+                </div>
+            </a>
+        </td>
+        <td>
+            <a href="http://2.240.0.12/inventar/" title="ინვენტარიზაცია" class="shrink">
+                <img src="#{request.contextPath}/resources/imgs/inventlogo.png"/>
+                <center><i><span>ინვენტარიზაცია</span></i></center>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <a href="http://2.240.0.12/autopark/" title="ინვენტარიზაცია" class="shrink">
+                <img src="#{request.contextPath}/resources/imgs/cars.png"/>
+                <center><i><span>ავტო-პარკი</span></i></center>
+            </a>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<ui:composition template="layoutes/baseLayout.xhtml">
+    <ui:define name="mainContent">
+        <link rel="stylesheet" href="resources/css/reports.css"/>
+        <link rel="stylesheet" href="resources/css/home.css"/>
+        <h:form prependId="false" id="reportsMainFormId">
+            <p:growl id="globalMessages" showDetail="true" life="4000"/>
+            <p:panel header="" style="height: 75px;width: 70%!important; margin-left: auto; margin-right: auto;">
+                <center>
+                    <p:watermark for="historyFromDateID" value="#{utilBean.ka('dan')}"/>
+                    <p:watermark for="historyToDateID" value="#{utilBean.ka('mde')}"/>
+                    <p:panelGrid columns="7">
+                        <p:selectOneMenu effect="fade" id="userSelectioninhistory" value="#{reportsBean.selectedUserId}"
+                                         style="width: 180px;">
+                            <f:selectItem itemLabel="#{utilBean.ka('TanamSromeli')}"/>
+                            <f:selectItems value="#{reportsBean.users}"/>
+                        </p:selectOneMenu>
+                        <p:calendar value="#{reportsBean.startDate}" id="historyFromDateID"
+                                    styleClass="historyCalendarClass" style="margin-left: 10px;" navigator="true"/>
+                        <p:calendar value="#{reportsBean.endDate}" id="historyToDateID"
+                                    styleClass="historyCalendarClass" style="margin-left: 10px;" navigator="true"/>
+                        <p:commandButton action="#{reportsBean.loadHitory()}" icon="ui-icon-arrowthickstop-1-s"
+                                         value="#{utilBean.ka('CatvirTva')}" update="@form" style="margin-left: 25px;"/>
+                    </p:panelGrid>
+                </center>
+            </p:panel>
+            <p:pieChart value="#{reportsBean.contrPieModel}" shadow="true"
+                        title="#{utilBean.ka('droiT SualedSi saerTo analizi')}" legendPosition="ne" fill="false"
+                        showDataLabels="true"
+                        style="height:400px; width: 40%; float: left; margin-left: 10%; margin-top: 20px;"
+                        sliceMargin="5" diameter="200"/>
+            <p:pieChart value="#{reportsBean.byUserPieModel}" shadow="true"
+                        title="#{utilBean.ka('analizi TanamSromlis mixedviT')}" legendPosition="ne" fill="false"
+                        showDataLabels="true"
+                        style="height:400px; width: 40%; float: right; margin-right: 10%; margin-top: 20px;"
+                        sliceMargin="5" diameter="200"/>
+            <p:separator style="width: 80%; margin-top: 10px; margin-bottom: 10px;"/>
+            <center>
+                <h:outputText
+                        value="#{utilBean.ka('klientebis raodenoba romlebmac uari Tqves xelSekrulebis gaformebaze: ')}{ #{reportsBean.disagrees} }"
+                        style="color: #666666;"/>
+            </center>
+        </h:form>
+    </ui:define>
+</ui:composition>
+</html>

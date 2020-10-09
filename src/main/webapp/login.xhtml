@@ -1,0 +1,45 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<h:head>
+    <title>D H L</title>
+    <link rel="stylesheet" href="resources/css/login.css"/>
+    <link href="#{request.contextPath}/resources/imgs/favicon-32x32.png" rel="icon" type="image/png"/>
+    <link href="#{request.contextPath}/resources/imgs/favicon-32x32.png" rel="shortcut icon" type="image/png"/>
+</h:head>
+<h:body>
+    <p:ajaxStatus style="width:64px;height:64px;position:fixed;right:50%;bottom:70%;">
+        <f:facet name="start">
+            <p:graphicImage value="/resources/imgs/loadng.GIF"/>
+        </f:facet>
+
+        <f:facet name="complete">
+            <h:outputText value=""/>
+        </f:facet>
+    </p:ajaxStatus>
+    <h:form id="loginFormId">
+        <p:growl id="loginGrowlId" escape="false" showDetail="true" life="4000"/>
+        <div class="login">
+            <ul>
+                <li>
+                    <h:inputText id="userNameId" value="#{authBean.userName}"/>
+                    <p:watermark for="userNameId" value="მომხმარებელი"/>
+                </li>
+                <li>
+                    <h:inputSecret id="userPassId" value="#{authBean.password}"/>
+                    <p:watermark for="userPassId" value="**********"/>
+                </li>
+                <li><p:commandButton id="loginButtonId"
+                                     action="#{authBean.login()}"
+                                     value="შესვლა"
+                                     update="@form"/>
+                </li>
+                <li>
+                    <a href="#{request.contextPath}">მთავარი გვერდი</a>
+                </li>
+            </ul>
+        </div>
+    </h:form>
+</h:body>
+</html>
