@@ -120,6 +120,112 @@ public class DbProcessing implements Serializable {
         }
     }
 
+    public static int emailAction(Emails email) {
+        try {
+            DBConnection.openDbConn();
+            CallableStatement cs;
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_email(?,?,?,?,?,?)}");
+            cs.registerOutParameter(3, java.sql.Types.INTEGER);
+            cs.setInt(1, email.getId());
+            cs.setString(2, email.getMail());
+            cs.setInt(3, email.getLeadId());
+            cs.setInt(4, email.getConfirmed());
+            cs.setString(5, email.getNote());
+            cs.setString(6, email.getActivationCode());
+            cs.execute();
+            return cs.getInt("p_result_id");
+        } catch (SQLException exception) {
+            return 0;
+        } finally {
+            DBConnection.closeDbConn();
+        }
+    }
+
+    public static int getSentEmailsCount(SentEmails srchObj) {
+        java.sql.Date fromDateSql = null;
+        java.sql.Date toDateSql = null;
+        if (srchObj.getSendDateStart() != null) {
+            fromDateSql = new java.sql.Date(srchObj.getSendDateStart().getTime());
+        }
+        if (srchObj.getSendDateEnd() != null) {
+            toDateSql = new java.sql.Date(srchObj.getSendDateEnd().getTime());
+        }
+        int count = 0;
+        try {
+            DBConnection.openDbConn();
+            CallableStatement cs;
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_emails_count(?,?,?,?,?,?,?,?)}");
+
+            cs.setString(1, srchObj.getMail());
+            cs.setInt(2, srchObj.getStatus());
+            cs.setString(3, srchObj.getIdentNumber());
+            cs.setInt(4, srchObj.getLeadId());
+            cs.setInt(5, srchObj.getConfirmed());
+            cs.setDate(6, fromDateSql);
+            cs.setDate(7, toDateSql);
+            cs.setString(8, srchObj.getSubject());
+
+            ResultSet res = cs.executeQuery();
+            while (res.next()) {
+                count = res.getInt(1);
+            }
+            return count;
+        } catch (SQLException ex) {
+            return 0;
+        }
+
+    }
+
+    public static List<SentEmails> getSentEmails(SentEmails srchObj, int start, int rowLimit) {
+        List<SentEmails> list = new ArrayList<SentEmails>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+        java.sql.Date fromDateSql = null;
+        java.sql.Date toDateSql = null;
+        if (srchObj.getSendDateStart() != null) {
+            fromDateSql = new java.sql.Date(srchObj.getSendDateStart().getTime());
+        }
+        if (srchObj.getSendDateEnd() != null) {
+            toDateSql = new java.sql.Date(srchObj.getSendDateEnd().getTime());
+        }
+
+        try {
+            DBConnection.openDbConn();
+            CallableStatement cs;
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_emails(?,?,?,?,?,?,?,?,?,?)}");
+            cs.setInt(1, start);
+            cs.setInt(2, rowLimit);
+            cs.setString(3, srchObj.getMail());
+            cs.setInt(4, srchObj.getStatus());
+            cs.setString(5, srchObj.getIdentNumber());
+            cs.setInt(6, srchObj.getLeadId());
+            cs.setDate(7, fromDateSql);
+            cs.setDate(8, toDateSql);
+            cs.setInt(9, srchObj.getConfirmed());
+            cs.setString(10, srchObj.getSubject());
+
+            ResultSet res = cs.executeQuery();
+            SentEmails obj;
+            while (res.next()) {
+                obj = new SentEmails();
+                obj.setId(res.getInt("id"));
+                obj.setMail(res.getString("mail"));
+                obj.setNote(res.getString("note"));
+                obj.setConfirmed(res.getInt("confirmed"));
+                obj.setStatus(res.getInt("status"));
+                obj.setCompany(res.getString("company"));
+                obj.setIdentNumber(res.getString("ident_number"));
+                obj.setSubject(res.getString("subject"));
+                obj.setBodyText(res.getString("body_text"));
+                obj.setStrSentDate(dateFormat.format(res.getTimestamp("create_date")));
+                list.add(obj);
+            }
+            return list;
+        } catch (Exception ex) {
+            return null;
+        }
+
+    }
+
     public static int departAction(Department depart) {
         try {
             DBConnection.openDbConn();

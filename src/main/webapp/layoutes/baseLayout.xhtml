@@ -33,7 +33,7 @@
 
                     <div style="width: 100%; display: table;">
                         <div style="display: table-row">
-                            <div style="width: 600px; display: table-cell;vertical-align: bottom;">
+                            <div style="width: 700px; display: table-cell;vertical-align: bottom;">
                                 <p:commandButton id="addUSerButID" icon="ui-icon-person" value="თანამშრომლები"
                                                  rendered="#{utilBean.admin or utilBean.iurist}"
                                                  action="#{utilBean.loadWorkers()}"
@@ -50,6 +50,10 @@
                                 <p:commandButton onclick="window.location.href = '#{request.contextPath}/sms.jsf'"
                                                  icon="ui-icon-clock" value="SMS history"
                                                  rendered="#{!utilBean.operator}"/>
+                                <p:commandButton
+                                        onclick="window.location.href = '#{request.contextPath}/sent_emails.jsf'"
+                                        icon="ui-icon-clock" value="Email history"
+                                        rendered="#{!utilBean.operator}"/>
                             </div>
                             <div style="display: table-cell;"><br/>
                                 <h:outputText value="#{utilBean.userName}"/><br/>

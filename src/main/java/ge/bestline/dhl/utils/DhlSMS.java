@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class DhlSMS {
 
-    public static void sendSms(String text, Map<Integer, List<String>> numbers) throws SQLException, IOException {
+    public static void sendSms(String text, Map<Integer, List<String>> numbers) throws SQLException, IOException, ConfigurationException {
         final ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
         List<SentSMSes> smsforDb = new ArrayList<SentSMSes>();
         SentSMSes sms;

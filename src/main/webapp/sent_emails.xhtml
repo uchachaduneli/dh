@@ -1,0 +1,122 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<ui:composition template="layoutes/baseLayout.xhtml">
+    <ui:define name="mainContent">
+        <link rel="stylesheet" href="resources/css/reports.css"/>
+        <link rel="stylesheet" href="resources/css/home.css"/>
+        <h:form prependId="false" id="reportsMainFormId">
+            <p:growl id="globalMessages" showDetail="true" life="4000"/>
+            <p:commandButton value="|" update="@form" action="#{emailsBean.init()}"
+                             style="width: 0; height: 0; margin-left: 0.2%"/>
+            <p:panel header="" style="height: 75px;">
+                <div style="text-align: center;">
+                    <p:watermark for="historyFromDateID" value="თარიღი დან"/>
+                    <p:watermark for="historyToDateID" value="მდე"/>
+                    <p:watermark for="srchToId" value="ადრესატი"/>
+                    <p:watermark for="srchTextId" value="საიდენტ. N"/>
+                    <p:watermark for="srchSubjectId" value="subject"/>
+                    <p:panelGrid columns="8">
+                        <p:calendar navigator="true" value="#{emailsBean.searchObj.sendDateStart}"
+                                    id="historyFromDateID">
+                            <p:ajax event="dateSelect" listener="#{emailsBean.validateFromDateFilter()}"
+                                    update="@(#historyToDateID, #globalMessages)"/>
+                        </p:calendar>
+                        <h:panelGroup layout="block" style="padding-right: 15px;">
+                            <p:calendar navigator="true" value="#{emailsBean.searchObj.sendDateEnd}"
+                                        id="historyToDateID">
+                                <p:ajax event="dateSelect" listener="#{emailsBean.validateToDateFilter()}"
+                                        update="@(#globalMessages)"/>
+                            </p:calendar>
+                            <p:commandButton icon="ui-icon-closethick" update="@(#historyFromDateID, #historyToDateID)"
+                                             style="height: 25px; position: absolute; font-size: 10px!important;"
+                                             title="გამოიყენეთ დროითი ფილტრის გასასუფთავებლად"
+                                             action="#{emailsBean.resetDateFilter()}"/>
+                        </h:panelGroup>
+
+
+                        <p:selectOneMenu value="#{emailsBean.searchObj.confirmed}">
+                            <f:selectItem itemLabel="ფოსტის ვალიდურობა" itemValue=""/>
+                            <f:selectItem itemLabel="არავალიდური" itemValue="#{1}"/>
+                            <f:selectItem itemValue="#{2}" itemLabel="ვალიდური"/>
+                            <p:ajax event="change" listener="#{emailsBean.filterByConfirmed()}"/>
+                        </p:selectOneMenu>
+                        <p:inputText value="#{emailsBean.searchObj.mail}" id="srchToId">
+                            <p:ajax event="change" listener="#{emailsBean.filterByTo()}"/>
+                        </p:inputText>
+                        <p:inputText value="#{emailsBean.searchObj.identNumber}" id="srchTextId">
+                            <p:ajax event="change" listener="#{emailsBean.filterByIdentNumber()}"/>
+                        </p:inputText>
+                        <p:inputText value="#{emailsBean.searchObj.subject}" id="srchSubjectId">
+                            <p:ajax event="change" listener="#{emailsBean.filterBySubject}"/>
+                        </p:inputText>
+
+                        <p:selectOneMenu value="#{emailsBean.searchObj.status}">
+                            <f:selectItem itemLabel="გაგზვნის სტატუსი" itemValue=""/>
+                            <f:selectItem itemLabel="წარმატებული" itemValue="#{1}"/>
+                            <f:selectItem itemValue="#{2}" itemLabel="წარუმატებელი"/>
+                            <p:ajax event="change" listener="#{emailsBean.filterStatus()}"/>
+                        </p:selectOneMenu>
+
+                        <p:commandButton action="#{emailsBean.init()}" icon="ui-icon-search" value="ძებნა"
+                                         update="@form"
+                                         style="margin-left: 25px;"/>
+
+                        <p:selectOneMenu value="#{emailsBean.rowLimit}">
+                            <f:selectItems value="#{emailsBean.rowCountList}"/>
+                            <p:ajax event="change" update="@form" listener="#{emailsBean.rowsCountChangeListener()}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                </div>
+            </p:panel>
+            <h:panelGroup style="margin: 5px;">
+                <h:outputFormat escape="false" value="#{emailsBean.paginator}" class="case-dttbl-paginator-facet"/>
+            </h:panelGroup>
+            <p:dataTable id="operatorLeadsTableId2"
+                         emptyMessage="ჩანაწერი არ მოიძებნა"
+                         var="var"
+                         rowKey="#{var.id}"
+                         value="#{emailsBean.emailsList}"
+                         selection="#{emailsBean.slctedEmail}"
+                         selectionMode="single"
+                         widgetVar="_tblList"
+                         style="max-height: 550px!important; overflow: auto;"
+                         currentPageReportTemplate="მოიძებნა ({totalRecords})">
+                <f:facet name="header">
+                </f:facet>
+                <p:column headerText="ID">
+                    <h:outputText value="#{var.id}"/>
+                </p:column>
+                <p:column headerText="კომპანია">
+                    <h:outputText value="#{var.company}"/>
+                </p:column>
+                <p:column headerText="ადრესატი">
+                    <h:outputText value="#{var.mail}"/>
+                </p:column>
+                <p:column headerText="Subject" title="#{var.bodyText}">
+                    <h:outputText value="#{var.subject}"/>
+                </p:column>
+                <p:column headerText="Note">
+                    <h:outputText value="#{var.note}"/>
+                </p:column>
+                <p:column headerText="სტატუსი">
+                    <div style="text-align: center;">
+                        <h:outputText styleClass="ui-icon ui-icon-check" rendered="#{var.status eq 1}"/>
+                        <h:outputText styleClass="ui-icon ui-icon-closethick" rendered="#{var.status ne 1}"/>
+                    </div>
+                </p:column>
+                <p:column headerText="დრო">
+                    <h:outputText style="width: 100%;" value="#{var.strSentDate}"/>
+                </p:column>
+                <f:facet name="footer" class="case-dttbl-paginator-facet">
+                </f:facet>
+            </p:dataTable>
+            <h:panelGroup style="margin: 5px;">
+                <h:outputFormat escape="false" value="#{emailsBean.paginator}" class="case-dttbl-paginator-facet"/>
+            </h:panelGroup>
+        </h:form>
+    </ui:define>
+</ui:composition>
+</html>

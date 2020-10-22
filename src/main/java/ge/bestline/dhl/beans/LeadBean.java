@@ -205,6 +205,8 @@ public class LeadBean implements Serializable {
                 Messages.error("პროვაიდერთან დაკავშირება ვერ ხერხდება");
             } catch (IOException e) {
                 Messages.error("შეტყობინების(ების) გაგზავნა ვერ მოხერხდა");
+            } catch (ConfigurationException e) {
+                Messages.error("კონფიგურაციის წაკითხვა ვერ მოხერხდა");
             }
         }
     }

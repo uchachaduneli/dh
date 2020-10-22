@@ -20,7 +20,7 @@ public class DBConnection implements Serializable {
     public static Connection getDbConn() {
         try {
             if (dbConn == null || dbConn.isClosed()) {
-                Class.forName(dbDriver).newInstance();
+                Class.forName(dbDriver).getDeclaredConstructor().newInstance();
                 dbConn = DriverManager.getConnection(dbUrl + dbName, dbUserName, dbPassword);
             }
         } catch (SQLException ex) {
