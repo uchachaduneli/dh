@@ -141,6 +141,27 @@ public class DbProcessing implements Serializable {
         }
     }
 
+    public static int phoneAction(PhoneNumbers phone) {
+        try {
+            DBConnection.openDbConn();
+            CallableStatement cs;
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_phone_nums(?,?,?,?,?,?)}");
+            cs.registerOutParameter(3, java.sql.Types.INTEGER);
+            cs.setInt(1, phone.getId());
+            cs.setString(2, phone.getPhoneNum());
+            cs.setInt(3, phone.getLeadId());
+            cs.setInt(4, phone.getConfirmed());
+            cs.setString(5, phone.getNote());
+            cs.setString(6, phone.getActivationCode());
+            cs.execute();
+            return cs.getInt("p_result_id");
+        } catch (SQLException exception) {
+            return 0;
+        } finally {
+            DBConnection.closeDbConn();
+        }
+    }
+
     public static int getSentEmailsCount(SentEmails srchObj) {
         java.sql.Date fromDateSql = null;
         java.sql.Date toDateSql = null;
