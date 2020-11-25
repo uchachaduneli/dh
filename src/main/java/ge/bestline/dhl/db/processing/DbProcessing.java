@@ -12,14 +12,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Ucha Chaduneli
  */
 public class DbProcessing implements Serializable {
+    static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 
     /*
      * tu userId -1 gadavcem pirvel parametrad amowmebs usernami - passwordit
@@ -95,6 +94,55 @@ public class DbProcessing implements Serializable {
         }
     }
 
+    public static Map<String, List<Emails>> getLeadEmails(int leadId) {
+        Map<String, List<Emails>> map = new HashMap<String, List<Emails>>();
+        List<Emails> list = new ArrayList<Emails>();
+        try {
+            DBConnection.openDbConn();
+            Statement cs = DBConnection.getDbConn().createStatement();
+            ResultSet res = cs.executeQuery("select * from emails where lead_id='" + leadId + "'");
+            while (res.next()) {
+                list.add(new Emails(res.getInt("id"),
+                        res.getString("mail"),
+                        res.getInt("lead_id"),
+                        res.getInt("confirmed"),
+                        res.getString("note"),
+                        res.getString("activation_code"),
+                        dateFormat.format(res.getTimestamp("create_date")))
+                );
+            }
+            res = cs.executeQuery("select concat(company_name,'(#', company_id_number, ')') from leads where lead_id='" + leadId + "'");
+            while (res.next()) {
+                map.put(res.getString(1), list);
+            }
+            return map;
+        } catch (Exception exception) {
+            return null;
+        }
+    }
+
+    public static List<PhoneNumbers> getLeadPhoneNums(int leadId) {
+        List<PhoneNumbers> list = new ArrayList<PhoneNumbers>();
+        try {
+            DBConnection.openDbConn();
+            Statement cs = DBConnection.getDbConn().createStatement();
+            ResultSet res = cs.executeQuery("select * from phone_numbers where lead_id='" + leadId + "'");
+            while (res.next()) {
+                list.add(new PhoneNumbers(res.getInt("id"),
+                        res.getString("phone_num"),
+                        res.getInt("lead_id"),
+                        res.getInt("confirmed"),
+                        res.getString("activation_code"),
+                        res.getString("note"),
+                        dateFormat.format(res.getTimestamp("create_date")))
+                );
+            }
+            return list;
+        } catch (Exception exception) {
+            return null;
+        }
+    }
+
     public static int userAction(User user, int authorId) {
         try {
             DBConnection.openDbConn();
@@ -124,8 +172,8 @@ public class DbProcessing implements Serializable {
         try {
             DBConnection.openDbConn();
             CallableStatement cs;
-            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_email(?,?,?,?,?,?)}");
-            cs.registerOutParameter(3, java.sql.Types.INTEGER);
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_email(?,?,?,?,?,?,?)}");
+            cs.registerOutParameter(7, java.sql.Types.INTEGER);
             cs.setInt(1, email.getId());
             cs.setString(2, email.getMail());
             cs.setInt(3, email.getLeadId());
@@ -135,6 +183,7 @@ public class DbProcessing implements Serializable {
             cs.execute();
             return cs.getInt("p_result_id");
         } catch (SQLException exception) {
+            exception.printStackTrace();
             return 0;
         } finally {
             DBConnection.closeDbConn();
@@ -145,8 +194,8 @@ public class DbProcessing implements Serializable {
         try {
             DBConnection.openDbConn();
             CallableStatement cs;
-            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_phone_nums(?,?,?,?,?,?)}");
-            cs.registerOutParameter(3, java.sql.Types.INTEGER);
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_phone_nums(?,?,?,?,?,?,?)}");
+            cs.registerOutParameter(7, java.sql.Types.INTEGER);
             cs.setInt(1, phone.getId());
             cs.setString(2, phone.getPhoneNum());
             cs.setInt(3, phone.getLeadId());
@@ -156,6 +205,7 @@ public class DbProcessing implements Serializable {
             cs.execute();
             return cs.getInt("p_result_id");
         } catch (SQLException exception) {
+            exception.printStackTrace();
             return 0;
         } finally {
             DBConnection.closeDbConn();

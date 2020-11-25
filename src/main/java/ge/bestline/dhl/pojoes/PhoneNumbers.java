@@ -1,15 +1,28 @@
 package ge.bestline.dhl.pojoes;
 
-import java.sql.Timestamp;
+import java.io.Serializable;
 
-public class PhoneNumbers {
+public class PhoneNumbers implements Serializable {
     private int id;
     private String phoneNum;
     private int leadId;
-    private byte confirmed;
+    private int confirmed;
     private String note;
     private String activationCode;
-    private Timestamp createDate;
+    private String strCreateDate;
+
+    public PhoneNumbers() {
+    }
+
+    public PhoneNumbers(int id, String phoneNum, int leadId, int confirmed, String note, String activationCode, String strCreateDate) {
+        this.id = id;
+        this.phoneNum = phoneNum;
+        this.leadId = leadId;
+        this.confirmed = confirmed;
+        this.note = note;
+        this.activationCode = activationCode;
+        this.strCreateDate = strCreateDate;
+    }
 
     public int getId() {
         return id;
@@ -35,11 +48,11 @@ public class PhoneNumbers {
         this.leadId = leadId;
     }
 
-    public byte getConfirmed() {
+    public int getConfirmed() {
         return confirmed;
     }
 
-    public void setConfirmed(byte confirmed) {
+    public void setConfirmed(int confirmed) {
         this.confirmed = confirmed;
     }
 
@@ -59,11 +72,11 @@ public class PhoneNumbers {
         this.activationCode = activationCode;
     }
 
-    public Timestamp getCreateDate() {
-        return createDate;
+    public String getStrCreateDate() {
+        return strCreateDate;
     }
 
-    public void setCreateDate(Timestamp createDate) {
-        this.createDate = createDate;
+    public void setStrCreateDate(String strCreateDate) {
+        this.strCreateDate = strCreateDate;
     }
 }

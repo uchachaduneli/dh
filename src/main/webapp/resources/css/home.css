@@ -58,6 +58,10 @@ span.case-dttbl-paginator-facet {
     font-weight: normal !important;
 }
 
+.centerTableContent table {
+    text-align: center;
+}
+
 #operatorLeadsTableId table {
     text-align: center;
     font-size: 12px !important;

@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
 /**
  * @author Ucha Chaduneli
@@ -363,6 +364,10 @@ public class Util implements Serializable {
     public static String getGetParameter(String key) {
         HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
         return request.getParameter(key);
+    }
+
+    public static String genetareConfirmCode() {// abrunebs 5 nishna kods
+        return String.valueOf(10000 + new Random().nextInt(90000));
     }
 
     public static Integer getGetParam(String key) {

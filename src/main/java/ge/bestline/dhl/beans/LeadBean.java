@@ -59,6 +59,13 @@ public class LeadBean implements Serializable {
     private NewSmsOrMailOpts contaction;
     private String slctedAttachName;
 
+    private Emails slctedLeadEmail;
+    private PhoneNumbers slctedLeadPhoneNumber;
+    private List<Emails> leadsEmailsList;
+    private List<PhoneNumbers> leadsPhoneNumsList;
+    private boolean emailEdit;
+    private boolean phoneNumEdit;
+
     public LeadBean() {
 
         if (Util.getSessionParameter("userId") != null) {
@@ -211,8 +218,102 @@ public class LeadBean implements Serializable {
         }
     }
 
+
     public void loadLeadDepartList() {
         slctedLead.setDepartments(DbProcessing.getLeadDepartments(slctedLead.getLeadId()));
+    }
+
+    public void loadLeadEmails() {
+//        leadsEmailsList = DbProcessing.getLeadEmails(slctedLead.getLeadId());
+    }
+
+    public void loadLeadPhoneNums() {
+        leadsPhoneNumsList = DbProcessing.getLeadPhoneNums(slctedLead.getLeadId());
+    }
+
+    public void confirmEmailManually() {
+        Emails tmp = slctedLeadEmail;
+        tmp.setConfirmed(2);
+        if (DbProcessing.emailAction(tmp) > 0) {
+            slctedLeadEmail = new Emails();
+            Util.executeScript("editEmailDLGwidg.hide()");
+            loadLeadEmails();
+            Messages.info(Util.ka("operacia dasrulda warmatebiT"));
+        } else {
+            Messages.info(Util.ka("operacia ar sruldeba"));
+        }
+    }
+
+    public void confirmPhoneNumManually() {
+        PhoneNumbers tmp = slctedLeadPhoneNumber;
+        tmp.setConfirmed(2);
+        if (DbProcessing.phoneAction(tmp) > 0) {
+            slctedLeadPhoneNumber = new PhoneNumbers();
+            Util.executeScript("editEmailDLGwidg.hide()");
+            loadLeadEmails();
+            Messages.info(Util.ka("operacia dasrulda warmatebiT"));
+        } else {
+            Messages.info(Util.ka("operacia ar sruldeba"));
+        }
+    }
+
+    public void saveUpdateEmail() {
+        if (!isValidEmail(slctedLeadEmail.getMail())) {
+            Messages.error("არასწორი ელ.ფოსტა !");
+            return;
+        }
+        if (DbProcessing.emailAction(slctedLeadEmail) > 0) {
+            slctedLeadEmail = new Emails();
+            Util.executeScript("insertEmailDLGwidg.hide()");
+            loadLeadEmails();
+            Messages.info("ოპერაცია დასრულდა წარმატებით");
+        } else {
+            Messages.info("ოპერაცია არ სრულდება");
+        }
+    }
+
+    public void saveUpdateLeadPhoneNum() {
+        if (DbProcessing.phoneAction(slctedLeadPhoneNumber) > 0) {
+            slctedLeadPhoneNumber = new PhoneNumbers();
+            Util.executeScript("insertEmailDLGwidg.hide()");
+            loadLeadPhoneNums();
+            Messages.info("ოპერაცია დასრულდა წარმატებით");
+        } else {
+            Messages.info("ოპერაცია არ სრულდება");
+        }
+    }
+
+    public void deleteLeadEmail() {
+        Emails tmp = slctedLeadEmail;
+        tmp.setId(tmp.getId() * -1);
+        if (DbProcessing.emailAction(tmp) > 0) {
+            slctedLead = new Lead();
+            Util.executeScript("confirmOfLeadEmailDeletion.hide()");
+            slctedLeadEmail = new Emails();
+            loadLeadEmails();
+            Messages.info("ოპერაცია დასრულდა წარმატებით");
+        } else {
+            Messages.info("ოპერაცია არ სრულდება");
+        }
+    }
+
+    public void deleteLeadPhoneNumber() {
+        PhoneNumbers tmp = slctedLeadPhoneNumber;
+        tmp.setId(tmp.getId() * -1);
+        if (DbProcessing.phoneAction(tmp) > 0) {
+            slctedLead = new Lead();
+            Util.executeScript("confirmOfLeadPhoneDeletion.hide()");
+            slctedLeadPhoneNumber = new PhoneNumbers();
+            loadLeadPhoneNums();
+            Messages.info("ოპერაცია დასრულდა წარმატებით");
+        } else {
+            Messages.info("ოპერაცია არ სრულდება");
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        String regex = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
+        return email.matches(regex);
     }
 
     public void loadRowCountList() {
@@ -478,6 +579,22 @@ public class LeadBean implements Serializable {
             slctedLead.setTermType(2);
             slctedLead.setLimited(2);
             slctedLead.setDavalianeba(2);
+        }
+    }
+
+    public void initEmailsDialog(long id) {
+        emailEdit = id == 1;
+        if (!emailEdit) {
+            slctedLeadEmail = new Emails();
+            slctedLeadEmail.setConfirmed(1);
+        }
+    }
+
+    public void initphoneNumsDialog(long id) {
+        phoneNumEdit = id == 1;
+        if (!phoneNumEdit) {
+            slctedLeadPhoneNumber = new PhoneNumbers();
+            slctedLeadPhoneNumber.setConfirmed(1);
         }
     }
 
@@ -1028,5 +1145,53 @@ public class LeadBean implements Serializable {
 
     public void setSlctedAttachName(String slctedAttachName) {
         this.slctedAttachName = slctedAttachName;
+    }
+
+    public Emails getSlctedLeadEmail() {
+        return slctedLeadEmail;
+    }
+
+    public void setSlctedLeadEmail(Emails slctedLeadEmail) {
+        this.slctedLeadEmail = slctedLeadEmail;
+    }
+
+    public PhoneNumbers getSlctedLeadPhoneNumber() {
+        return slctedLeadPhoneNumber;
+    }
+
+    public void setSlctedLeadPhoneNumber(PhoneNumbers slctedLeadPhoneNumber) {
+        this.slctedLeadPhoneNumber = slctedLeadPhoneNumber;
+    }
+
+    public List<Emails> getLeadsEmailsList() {
+        return leadsEmailsList;
+    }
+
+    public void setLeadsEmailsList(List<Emails> leadsEmailsList) {
+        this.leadsEmailsList = leadsEmailsList;
+    }
+
+    public List<PhoneNumbers> getLeadsPhoneNumsList() {
+        return leadsPhoneNumsList;
+    }
+
+    public void setLeadsPhoneNumsList(List<PhoneNumbers> leadsPhoneNumsList) {
+        this.leadsPhoneNumsList = leadsPhoneNumsList;
+    }
+
+    public boolean isEmailEdit() {
+        return emailEdit;
+    }
+
+    public void setEmailEdit(boolean emailEdit) {
+        this.emailEdit = emailEdit;
+    }
+
+    public boolean isPhoneNumEdit() {
+        return phoneNumEdit;
+    }
+
+    public void setPhoneNumEdit(boolean phoneNumEdit) {
+        this.phoneNumEdit = phoneNumEdit;
     }
 }

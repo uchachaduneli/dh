@@ -25,7 +25,13 @@ public class DhlMail {
 
         final ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
 
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.port", confParams.getSmtp_port());
+        props.put("mail.smtp.host", confParams.getSmtp_host());
+        props.put("mail.smtp.auth", "true");
+
         InternetAddress[] myBccList = InternetAddress.parse(Bcc);
+
         Session session = Session.getDefaultInstance(props,
                 new javax.mail.Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
@@ -46,9 +52,10 @@ public class DhlMail {
 //        textBodyPart.setText(text);
         textBodyPart.setContent(text, "text/plain; charset=UTF-8");
         multipart.addBodyPart(textBodyPart);
-
-        for (String fileName : attachments) {
-            addAttachment(multipart, Constants.uploadPath + "\\" + fileName);
+        if (attachments != null) {
+            for (String fileName : attachments) {
+                addAttachment(multipart, Constants.uploadPath + "\\" + fileName);
+            }
         }
         message.setContent(multipart);
 

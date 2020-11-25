@@ -1,9 +1,10 @@
 package ge.bestline.dhl.pojoes;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NewSmsOrMailOpts {
+public class NewSmsOrMailOpts implements Serializable {
     private int smsOrMail;
     private int smsOrMailToSrchedOrOne;
     private String smsOrMailTo;
