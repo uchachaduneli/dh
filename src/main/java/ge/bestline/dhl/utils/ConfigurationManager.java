@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
@@ -14,10 +15,11 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ConfigurationManager {
+public class ConfigurationManager implements Serializable {
     private static final Logger lgg = Logger.getLogger(ConfigurationManager.class);
     public static final String CONFIG_FILE_LOCATION = "/dhl-conf.properties";
-    public static final String CONF_PATTERN = "(smtp_host|smtp_port|sender_email|sender_email_pass|sms_url|enable_multisending_sms_and_email|confirm_email_template)";
+    public static final String CONF_PATTERN = "(smtp_host|smtp_port|sender_email|sender_email_pass" +
+            "|sms_url|enable_multisending_sms_and_email|confirm_email_template|confirm_sms_template)";
 
     protected long lastModified;
     private static ConfigurationManager instance = new ConfigurationManager();
@@ -90,52 +92,13 @@ public class ConfigurationManager {
         }
     }
 
-
-//    public static String readUnicodeFiles(String fileName) {
-//        Path path = Paths.get(EMAIL_TEMPLATE_LOCATION);
-//        String res = "";
-//        try {
-//            List<String> list = Files.readAllLines(path, StandardCharsets.UTF_8);
-//            for (String s : list) {
-//                res += s;
-//            }
-//            return res;
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
-//
-//    public static Properties readPropertiesFile(String fileName) throws ConfigurationException {
-//        FileInputStream configStream = null;
-//        Properties configurationProperties = new Properties();
-//        try {
-//            configStream = new FileInputStream(new File(fileName));
-//            ClassLoader classLoader = ConfigurationManager.class.getClassLoader();
-//            configurationProperties.load(new InputStreamReader(classLoader.getResourceAsStream(fileName), "UTF-8"));
-//
-////            configurationProperties.put("confirm_email_template", readUnicodeFiles(fileName));
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//            throw new ConfigurationException("Configuration file " + fileName + " not found");
-//        } catch (IOException e) {
-//            throw new ConfigurationException("Exception while loading property file: " + fileName, e);
-//        } finally {
-//            try {
-//                configStream.close();
-//            } catch (IOException e) {
-//                System.out.println(" methodName=readPropertiesFile" + " {{{Can't close configuration file " + e.getMessage() + "}}}");
-//            }
-//        }
-//        return configurationProperties;
-//    }
-
-
     public ConfigParams getConfParams() throws ConfigurationException {
         if (confMap != null)
             return new ConfigParams(confMap.get("smtp_host"), confMap.get("smtp_port"),
                     confMap.get("sender_email"), confMap.get("sender_email_pass"),
-                    confMap.get("sms_url"), confMap.get("enable_multisending_sms_and_email"), confMap.get("confirm_email_template"));
+                    confMap.get("sms_url"), confMap.get("enable_multisending_sms_and_email")
+                    , confMap.get("confirm_email_template")
+                    , confMap.get("confirm_sms_template"));
         else
             throw new ConfigurationException("Can not get configuration");
     }

@@ -7,11 +7,9 @@ import ge.bestline.dhl.utils.Util;
 
 import javax.faces.model.SelectItem;
 import java.io.Serializable;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.*;
 
 /**
@@ -121,7 +119,8 @@ public class DbProcessing implements Serializable {
         }
     }
 
-    public static List<PhoneNumbers> getLeadPhoneNums(int leadId) {
+    public static Map<String, List<PhoneNumbers>> getLeadPhoneNums(int leadId) {
+        Map<String, List<PhoneNumbers>> map = new HashMap<String, List<PhoneNumbers>>();
         List<PhoneNumbers> list = new ArrayList<PhoneNumbers>();
         try {
             DBConnection.openDbConn();
@@ -132,12 +131,16 @@ public class DbProcessing implements Serializable {
                         res.getString("phone_num"),
                         res.getInt("lead_id"),
                         res.getInt("confirmed"),
-                        res.getString("activation_code"),
                         res.getString("note"),
+                        res.getString("activation_code"),
                         dateFormat.format(res.getTimestamp("create_date")))
                 );
             }
-            return list;
+            res = cs.executeQuery("select concat(company_name,'(#', company_id_number, ')') from leads where lead_id='" + leadId + "'");
+            while (res.next()) {
+                map.put(res.getString(1), list);
+            }
+            return map;
         } catch (Exception exception) {
             return null;
         }
@@ -182,7 +185,10 @@ public class DbProcessing implements Serializable {
             cs.setString(6, email.getActivationCode());
             cs.execute();
             return cs.getInt("p_result_id");
-        } catch (SQLException exception) {
+        } catch (SQLIntegrityConstraintViolationException ex) {
+            ex.printStackTrace();
+            return -2;
+        } catch (Exception exception) {
             exception.printStackTrace();
             return 0;
         } finally {
@@ -204,7 +210,10 @@ public class DbProcessing implements Serializable {
             cs.setString(6, phone.getActivationCode());
             cs.execute();
             return cs.getInt("p_result_id");
-        } catch (SQLException exception) {
+        } catch (SQLIntegrityConstraintViolationException ex) {
+            ex.printStackTrace();
+            return -2;
+        } catch (Exception exception) {
             exception.printStackTrace();
             return 0;
         } finally {

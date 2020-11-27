@@ -1,8 +1,9 @@
 package ge.bestline.dhl.pojoes;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class SentEmails {
+public class SentEmails implements Serializable {
     private int id;
     private String mail;
     private String note;

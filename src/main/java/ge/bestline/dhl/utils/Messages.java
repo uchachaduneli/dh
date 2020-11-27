@@ -2,11 +2,12 @@ package ge.bestline.dhl.utils;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import java.io.Serializable;
 
 /**
  * @author Ucha Chaduneli
  */
-public class Messages {
+public class Messages implements Serializable {
 
     public static void info(String text) {
         FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "", text));

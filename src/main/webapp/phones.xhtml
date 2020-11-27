@@ -1,0 +1,189 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<ui:composition template="layoutes/baseLayout.xhtml">
+    <ui:define name="mainContent">
+        <link rel="stylesheet" href="resources/css/home.css"/>
+        <style>
+            .main_content {
+                width: 70%;
+            }
+        </style>
+        <h:form prependId="true" id="phonesMainFormId">
+            <p:growl id="globalMessages" showDetail="true" life="4000"/>
+            <p:dataTable value="#{phoneBean.leadsPhones}"
+                         var="listvar"
+                         styleClass="centerTableContent"
+                         rowKey="#{listvar.id}"
+                         selection="#{phoneBean.slctedLeadPhone}"
+                         selectionMode="single"
+                         emptyMessage="ჩანაწერი არ მოიძებნა"
+                         widgetVar="carsTable">
+                <f:facet name="header">
+                    <p:commandButton value="დამატება"
+                                     action="#{phoneBean.initPhoneNumbersDialog(0, null)}"
+                                     icon="ui-icon-plus"
+                                     update="@(#inserphonetDlgFormId)"
+                                     oncomplete="insertphoneDLGwidg.show();" style="float:left;"/>
+                    <p:outputPanel>
+                        <h:outputText value="#{phoneBean.company} ტელეფონის ნომრები"/>
+                    </p:outputPanel>
+                </f:facet>
+                <p:column headerText="ტელეფონის N">
+                    <h:outputText value="#{listvar.phoneNum}" title="ID #{listvar.id}"/>
+                </p:column>
+                <p:column headerText="დადასტურებული">
+                    <center>
+                        <h:outputText rendered="#{listvar.confirmed eq 2 and phoneBean.isMobile(listvar.phoneNum)}"
+                                      styleClass="ui-icon ui-icon-check"/>
+                        <h:outputText rendered="#{listvar.confirmed ne 2 and phoneBean.isMobile(listvar.phoneNum)}"
+                                      styleClass="ui-icon ui-icon-minusthick"/>
+                    </center>
+                </p:column>
+                <p:column headerText="შენიშვნა">
+                    <h:outputText value="#{listvar.note}"/>
+                </p:column>
+                <p:column headerText="დაემატა">
+                    <h:outputText value="#{listvar.strCreateDate}"/>
+                </p:column>
+                <p:column>
+                    <p:commandButton title="რედაქტირება" rendered="#{!utilBean.operator}"
+                                     action="#{phoneBean.initPhoneNumbersDialog(1, listvar)}"
+                                     icon="ui-icon-pencil"
+                                     update="@(#inserphonetDlgFormId)"
+                                     oncomplete="insertphoneDLGwidg.show();">
+                        <f:setPropertyActionListener value="#{listvar}" target="#{phoneBean.slctedLeadPhone}"/>
+                    </p:commandButton>
+                    <p:commandButton title="ხელით კონფირმაცია (ვალიდაციის SMS-ის გაგზავნის გარეშე)"
+                                     rendered="#{!utilBean.operator and listvar.confirmed ne 2 and phoneBean.isMobile(listvar.phoneNum)}"
+                                     icon="ui-icon-check"
+                                     oncomplete="confirmOfLeadphoneManualWidg.show();">
+                        <f:setPropertyActionListener value="#{listvar}" target="#{phoneBean.slctedLeadPhone}"/>
+                    </p:commandButton>
+                    <p:commandButton title="კონფირმაციის კოდის გაგზავნა"
+                                     rendered="#{!utilBean.operator and listvar.confirmed ne 2 and phoneBean.isMobile(listvar.phoneNum)}"
+                                     icon="ui-icon-comment"
+                                     oncomplete="confirmOfSendConfirmphoneWidg.show();">
+                        <f:setPropertyActionListener value="#{listvar}" target="#{phoneBean.slctedLeadPhone}"/>
+                    </p:commandButton>
+                    <p:commandButton title="წაშლა" rendered="#{!utilBean.operator}"
+                                     icon="ui-icon-trash"
+                                     oncomplete="confirmOfLeadphoneDeletion.show();">
+                        <f:setPropertyActionListener value="#{listvar}" target="#{phoneBean.slctedLeadPhone}"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+            <p:confirmDialog width="550" message="ნამდვილად გსურთ ვალიდაციის კოდის გაგზავნა ადრესატისთვის?"
+                             rendered="#{!utilBean.operator}"
+                             header="ვალიდაციის კოდის გაგზავნა ადრესატისთვის" severity="alert"
+                             widgetVar="confirmOfSendConfirmphoneWidg">
+                <p:commandButton value="დიახ" update="@form" action="#{phoneBean.sendConfirmPhone()}"/>
+                <p:commandButton value="არა" onclick="confirmOfSendConfirmphoneWidg.hide();"/>
+            </p:confirmDialog>
+
+            <p:confirmDialog width="550" message="ადასტურებთ ტელეფონის ნომრის ვალიდურობას?"
+                             rendered="#{!utilBean.operator}"
+                             header="ინფორმაციის ვალიდურობის დადასტურება" severity="alert"
+                             widgetVar="confirmOfLeadphoneManualWidg">
+                <p:commandButton value="დიახ" update="@form" action="#{phoneBean.confirmPhoneManually()}"/>
+                <p:commandButton value="არა" onclick="confirmOfLeadphoneManualWidg.hide();"/>
+            </p:confirmDialog>
+
+            <p:confirmDialog width="550" message="დარწმუნებული ხართ რომ გსურთ ჩანაწერის წაშლა?"
+                             rendered="#{!utilBean.operator}"
+                             header="ინფორმაციის წაშლა" severity="alert" widgetVar="confirmOfLeadphoneDeletion">
+                <p:commandButton value="დიახ" update="@form" action="#{phoneBean.deleteLeadPhone()}"/>
+                <p:commandButton value="არა" onclick="confirmOfLeadphoneDeletion.hide();"/>
+            </p:confirmDialog>
+
+            <p:ajaxStatus style="width:44px;height:44px;position:fixed;right:95%;bottom:95%;">
+                <f:facet name="start">
+                    <p:graphicImage value="/resources/imgs/loading1.GIF"/>
+                </f:facet>
+                <f:facet name="complete">
+                    <h:outputText value=""/>
+                </f:facet>
+            </p:ajaxStatus>
+        </h:form>
+
+        <p:dialog widgetVar="insertphoneDLGwidg" position="center" modal="true"
+                  header="ტელეფონის ნომრის დამატება/რედაქტირება" resizable="false" width="700">
+            <h:form id="inserphonetDlgFormId" prependId="false">
+                <p:growl id="inserphonetDlgFormgrowlid" showDetail="true" life="5000"/>
+
+                <p:panelGrid id="insertPnlGridId23" columns="2" style="width: 100%; margin-top: 10px;"
+                             styleClass="pnlGridClass">
+                    <h:outputLabel value="ტელეფონის N *"/>
+                    <h:panelGroup layout="block">
+                        <div id="validationMsg"></div>
+                        <p:inputText value="#{phoneBean.slctedLeadPhone.phoneNum}" id="phoneInputId"
+                                     onkeyup="validatePhone();"/>
+                    </h:panelGroup>
+
+                    <h:outputLabel value="შენიშვნა"/>
+                    <p:inputTextarea autoResize="false" style=" height: 70px;"
+                                     value="#{phoneBean.slctedLeadPhone.note}"/>
+
+                </p:panelGrid>
+
+                <p:panelGrid columns="2" style="width: 100%; margin-top: 0;" styleClass="pnlGridClass">
+                    <p:commandButton value="დახურვა"
+                                     icon="ui-icon-close"
+                                     style=" font-weight: normal !important; font-size: 14px!important;"
+                                     onclick="insertphoneDLGwidg.hide();"/>
+                    <h:panelGroup layout="block">
+                        <center>
+                            <p:commandButton value="დამახსოვრება" id="phonesDlgSaveBtnId"
+                                             action="#{phoneBean.saveUpdatePhone}"
+                                             icon="ui-icon-disk"
+                                             widgetVar="leadsavewidget"
+                                             onclick="leadsavewidget.disable();"
+                                             oncomplete="leadsavewidget.enable();"
+                                             update="@(#phonesMainFormId)"
+                                             style=" font-weight: normal !important; font-size: 18px!important; width: 70%;"/>
+                        </center>
+                    </h:panelGroup>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
+
+        <script>
+
+            $(document).ready(function () {
+                document.getElementById("buttonsContainerDivId").style.display = "none";
+            });
+
+            function showAlert(trueOrFalse) {
+                if (trueOrFalse) {
+                    document.getElementById("validationMsg").innerText = "";
+                } else {
+                    document.getElementById("validationMsg").innerText = "ტელეფონის ნომერი არასწორია!";
+                }
+            }
+
+            function validatePhone() {
+                let reValidMobNum1 = new RegExp(/^\+?\d{12}$/);// mobilurebi +995 5** ** ** **
+                let reValidMobNum2 = new RegExp(/^(?=\d{9}$)(5)\d+/);//mobilurebi 5** ** ** **
+                let reValidHomeNum = new RegExp(/^[0-9]{0,}$/); //qalaqis nomrebi
+                let num = document.getElementById("phoneInputId").value;
+
+                if (num.startsWith("5")) {
+                    console.log(reValidMobNum2.test(num));
+                    showAlert(reValidMobNum2.test(num));
+                } else if (num.startsWith("+")) {
+                    showAlert(reValidMobNum1.test(num));
+                    console.log(reValidMobNum1.test(num));
+                } else {
+                    showAlert(reValidHomeNum.test(num));
+                    console.log(reValidHomeNum.test(num));
+                }
+            }
+        </script>
+
+    </ui:define>
+</ui:composition>
+</html>

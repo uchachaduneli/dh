@@ -6,6 +6,11 @@
 <ui:composition template="layoutes/baseLayout.xhtml">
     <ui:define name="mainContent">
         <link rel="stylesheet" href="resources/css/home.css"/>
+        <style>
+            .main_content {
+                width: 70%;
+            }
+        </style>
         <h:form prependId="true" id="emailsMainFormId">
             <p:growl id="globalMessages" showDetail="true" life="4000"/>
             <p:commandButton value="|" update="@(#inserEmailtDlgFormId)" action="#{emailBean.initEmailsDialog}"
@@ -21,14 +26,16 @@
                          widgetVar="carsTable">
                 <f:facet name="header">
                     <p:outputPanel>
-                        <h:outputText value="#{emailBean.company}"/>
+                        <p:commandButton value="დამატება"
+                                         action="#{emailBean.initEmailsDialog(0, null)}"
+                                         icon="ui-icon-plus"
+                                         update="@(#inserEmailtDlgFormId)"
+                                         oncomplete="insertEmailDLGwidg.show();" style="float:left;"/>
+                        <h:outputText value="#{emailBean.company} ელ. ფოსტის მისამართები"/>
                     </p:outputPanel>
                 </f:facet>
-                <p:column headerText="#">
-                    <h:outputText value="#{listvar.id}"/>
-                </p:column>
                 <p:column headerText="ელ. ფოსტა">
-                    <h:outputText value="#{listvar.mail}"/>
+                    <h:outputText value="#{listvar.mail}" title="ID #{listvar.id}"/>
                 </p:column>
                 <p:column headerText="დადასტურებული">
                     <center>
@@ -153,7 +160,8 @@
 
 
             function validateEmail() {
-                var reValidEmail = new RegExp(/^(([^&lt;>()\[\]\.,;:\s@\"]+(\.[^&lt;>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^&lt;>()\.,;\s@\"]+\.{0,1})+[^&lt;>()\.,;:\s@\"]{2,})$/)
+                // var reValidEmail = new RegExp(/^(([^&lt;>()\[\]\.,;:\s@\"]+(\.[^&lt;>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^&lt;>()\.,;\s@\"]+\.{0,1})+[^&lt;>()\.,;:\s@\"]{2,})$/)
+                var reValidEmail = new RegExp(/^[\w-_\.+]*[\w-_\.]\@([\w]+\.)+[\w]+[\w]$/);
                 var email = document.getElementById("emailInputId").value;
                 console.log(reValidEmail.test(email));
                 if (reValidEmail.test(email)) {

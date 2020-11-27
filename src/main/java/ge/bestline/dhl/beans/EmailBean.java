@@ -20,21 +20,26 @@ public class EmailBean implements Serializable {
     private Emails slctedLeadEmail;
     private List<Emails> leadsEmailsList;
 
-    /*private List<PhoneNumbers> leadsPhoneNumsList;
-    private boolean phoneNumEdit;
-    private PhoneNumbers slctedLeadPhoneNumber;*/
-
     private boolean emailEdit;
     private Integer leadId;
     private String company;
 
     public EmailBean() {
-//        if (Util.getSessionParameter("userId") != null) {
-        leadId = Util.getGetParam("leadId");
-        loadLeadEmails();
-//        } else {
-//            Util.logout();
-//        }
+        if (Util.getSessionParameter("userId") != null) {
+            try {
+                leadId = Util.getGetParam("leadId");
+                if (leadId == null) {
+                    Messages.error("კომპანიის შესახებ ინფორმაციის წამოღება ვერ ხერხდება დაბრუნდით მთავარ გვერდზე");
+                    return;
+                }
+            } catch (Exception e) {
+                Messages.error("კომპანიის შესახებ ინფორმაციის წამოღება ვერ ხერხდება დაბრუნდით მთავარ გვერდზე");
+                return;
+            }
+            loadLeadEmails();
+        } else {
+            Util.logout();
+        }
 
     }
 
@@ -99,10 +104,17 @@ public class EmailBean implements Serializable {
             Messages.error("არასწორი ელ.ფოსტა !");
             return;
         }
-        if (DbProcessing.emailAction(slctedLeadEmail) > 0) {
+        if (!(slctedLeadEmail.getLeadId() > 0)) {
+            Messages.error("კომპანია ვერ იქნა იდენტიფიცირებული, დაბრუნდით მთავარ გვერდზე !");
+            return;
+        }
+        int res = DbProcessing.emailAction(slctedLeadEmail);
+        if (res > 0) {
             slctedLeadEmail = new Emails();
             Util.executeScript("insertEmailDLGwidg.hide();");
             Messages.info("ოპერაცია დასრულდა წარმატებით");
+        } else if (res == -2) {
+            Messages.info("კომპანიაზე უკვე დამატებულია მითითებული მეილი");
         } else {
             Messages.info("ოპერაცია არ სრულდება");
         }
@@ -123,66 +135,16 @@ public class EmailBean implements Serializable {
         }
     }
 
-//
-//    public void loadLeadPhoneNums() {
-//        leadsPhoneNumsList = DbProcessing.getLeadPhoneNums(leadId);
-//    }
-
-//    public void confirmPhoneNumManually() {
-//        PhoneNumbers tmp = slctedLeadPhoneNumber;
-//        tmp.setConfirmed(2);
-//        if (DbProcessing.phoneAction(tmp) > 0) {
-//            slctedLeadPhoneNumber = new PhoneNumbers();
-//            Util.executeScript("editEmailDLGwidg.hide()");
-//            loadLeadEmails();
-//            Messages.info(Util.ka("operacia dasrulda warmatebiT"));
-//        } else {
-//            Messages.info(Util.ka("operacia ar sruldeba"));
-//        }
-//    }
-//
-//    public void saveUpdateLeadPhoneNum() {
-//        if (DbProcessing.phoneAction(slctedLeadPhoneNumber) > 0) {
-//            slctedLeadPhoneNumber = new PhoneNumbers();
-//            Util.executeScript("insertEmailDLGwidg.hide()");
-//            loadLeadPhoneNums();
-//            Messages.info("ოპერაცია დასრულდა წარმატებით");
-//        } else {
-//            Messages.info("ოპერაცია არ სრულდება");
-//        }
-//    }
-//
-//    public void deleteLeadPhoneNumber() {
-//        PhoneNumbers tmp = slctedLeadPhoneNumber;
-//        tmp.setId(tmp.getId() * -1);
-//        if (DbProcessing.phoneAction(tmp) > 0) {
-//            slctedLeadPhoneNumber = new PhoneNumbers();
-//            Util.executeScript("confirmOfLeadPhoneDeletion.hide()");
-//            slctedLeadPhoneNumber = new PhoneNumbers();
-//            loadLeadPhoneNums();
-//            Messages.info("ოპერაცია დასრულდა წარმატებით");
-//        } else {
-//            Messages.info("ოპერაცია არ სრულდება");
-//        }
-//    }
-//
-//    public void initphoneNumsDialog(long id) {
-//        phoneNumEdit = id == 1;
-//        if (!phoneNumEdit) {
-//            slctedLeadPhoneNumber = new PhoneNumbers();
-//        }
-//    }
-
     private boolean isValidEmail(String email) {
         String regex = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
         return email.matches(regex);
     }
 
     public void initEmailsDialog(long id, Emails slcted) {
-
         emailEdit = id == 1;
         if (!emailEdit) {
             slctedLeadEmail = new Emails();
+            slctedLeadEmail.setLeadId(leadId);
         } else {
             slctedLeadEmail = slcted;
         }

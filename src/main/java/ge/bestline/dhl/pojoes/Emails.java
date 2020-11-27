@@ -3,10 +3,10 @@ package ge.bestline.dhl.pojoes;
 import java.io.Serializable;
 
 public class Emails implements Serializable {
-    private Integer id;
+    private int id;
     private String mail;
-    private Integer leadId;
-    private Integer confirmed;
+    private int leadId;
+    private int confirmed;
     private String note;
     private String activationCode;
     private String strCreateDate;
@@ -14,7 +14,7 @@ public class Emails implements Serializable {
     public Emails() {
     }
 
-    public Emails(Integer id, String mail, Integer leadId, Integer confirmed, String note, String activationCode, String strCreateDate) {
+    public Emails(int id, String mail, int leadId, int confirmed, String note, String activationCode, String strCreateDate) {
         this.id = id;
         this.mail = mail;
         this.leadId = leadId;
@@ -24,11 +24,11 @@ public class Emails implements Serializable {
         this.strCreateDate = strCreateDate;
     }
 
-    public Integer getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -40,19 +40,19 @@ public class Emails implements Serializable {
         this.mail = mail;
     }
 
-    public Integer getLeadId() {
+    public int getLeadId() {
         return leadId;
     }
 
-    public void setLeadId(Integer leadId) {
+    public void setLeadId(int leadId) {
         this.leadId = leadId;
     }
 
-    public Integer getConfirmed() {
+    public int getConfirmed() {
         return confirmed;
     }
 
-    public void setConfirmed(Integer confirmed) {
+    public void setConfirmed(int confirmed) {
         this.confirmed = confirmed;
     }
 

@@ -3,10 +3,7 @@ package ge.bestline.dhl.utils;
 import ge.bestline.dhl.db.processing.DbProcessing;
 import ge.bestline.dhl.pojoes.SentSMSes;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -15,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class DhlSMS {
+public class DhlSMS implements Serializable {
 
     public static void sendSms(String text, Map<Integer, List<String>> numbers) throws SQLException, IOException, ConfigurationException {
         final ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();

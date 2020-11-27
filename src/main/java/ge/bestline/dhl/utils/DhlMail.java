@@ -6,10 +6,11 @@ import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Properties;
 
-public class DhlMail {
+public class DhlMail implements Serializable {
 
     static Properties props = new Properties();
 
