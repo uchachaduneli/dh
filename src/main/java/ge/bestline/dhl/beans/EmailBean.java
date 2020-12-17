@@ -2,12 +2,17 @@ package ge.bestline.dhl.beans;
 
 import ge.bestline.dhl.db.processing.DbProcessing;
 import ge.bestline.dhl.pojoes.Emails;
+import ge.bestline.dhl.pojoes.SentEmails;
 import ge.bestline.dhl.utils.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import java.io.Serializable;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,16 +28,20 @@ public class EmailBean implements Serializable {
     private boolean emailEdit;
     private Integer leadId;
     private String company;
+    private static final Logger logger = LogManager.getLogger(EmailBean.class);
+    private int currentUserId;
 
     public EmailBean() {
-        if (Util.getSessionParameter("userId") != null) {
+        currentUserId = (int) Util.getSessionParameter("userId");
+        if (currentUserId > 0) {
             try {
                 leadId = Util.getGetParam("leadId");
-                if (leadId == null) {
+                if (leadId == 0) {
                     Messages.error("კომპანიის შესახებ ინფორმაციის წამოღება ვერ ხერხდება დაბრუნდით მთავარ გვერდზე");
                     return;
                 }
             } catch (Exception e) {
+                logger.error("Can't Get userId From Session", e);
                 Messages.error("კომპანიის შესახებ ინფორმაციის წამოღება ვერ ხერხდება დაბრუნდით მთავარ გვერდზე");
                 return;
             }
@@ -48,6 +57,18 @@ public class EmailBean implements Serializable {
         slctedLeadEmail = new Emails();
     }
 
+    public void syncWithDhlOrInvoices() {
+        DbProcessing.syncWithDhlOrInvoices(slctedLeadEmail).stream().forEach(s -> {
+            if (s.contains(".")) {
+                Messages.info(s);
+                loadLeadEmails();
+            } else {
+                Messages.error(s);
+            }
+        });
+        Util.executeScript("dhlOrInvoiceDbSyncWidgDlg.hide()");
+    }
+
     public void loadLeadEmails() {
         Map<String, List<Emails>> res = DbProcessing.getLeadEmails(leadId);
         Map.Entry<String, List<Emails>> entr = res.entrySet().iterator().next();
@@ -58,6 +79,7 @@ public class EmailBean implements Serializable {
     public void confirmEmailManually() {
         Emails tmp = slctedLeadEmail;
         tmp.setConfirmed(2);
+        tmp.setActivationCode(null);
         if (DbProcessing.emailAction(tmp) > 0) {
             slctedLeadEmail = new Emails();
             Util.executeScript("confirmOfLeadEmailManualWidg.hide()");
@@ -69,6 +91,7 @@ public class EmailBean implements Serializable {
     }
 
     public void sendConfirmEmail() {
+        List<SentEmails> sentEmails = new ArrayList<>();
         Emails tmp = slctedLeadEmail;
         try {
             ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
@@ -78,15 +101,24 @@ public class EmailBean implements Serializable {
                             replace("{ACTIVATIONCODE}", tmp.getActivationCode()).
                             replace("{URLPARAMS}", tmp.getId() + "/" + tmp.getActivationCode()),
                     null);
-
+            sentEmails.add(new SentEmails(tmp.getId(), "Email Confirmation", confParams.getConfirm_email_template(), 1));
         } catch (ConfigurationException e) {
+            sentEmails.add(new SentEmails(tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2));
             Messages.warn(e.getMessage());
-            e.printStackTrace();
+            logger.error(e);
             return;
         } catch (Exception e) {
+            sentEmails.add(new SentEmails(tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2));
             Messages.warn("მეილის გაგზავნა ვერ მოხერხდა");
-            e.printStackTrace();
+            logger.error("Can't send email", e);
             return;
+        }
+        if (!sentEmails.isEmpty()) {
+            try {
+                DbProcessing.insertEmailHistory(sentEmails, currentUserId);
+            } catch (SQLException e) {
+                logger.error("Can't insert sent emails into Database", e);
+            }
         }
         if (DbProcessing.emailAction(tmp) > 0) {
             slctedLeadEmail = new Emails();

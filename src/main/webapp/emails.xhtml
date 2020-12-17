@@ -8,7 +8,7 @@
         <link rel="stylesheet" href="resources/css/home.css"/>
         <style>
             .main_content {
-                width: 70%;
+                width: 80%;
             }
         </style>
         <h:form prependId="true" id="emailsMainFormId">
@@ -46,6 +46,9 @@
                 <p:column headerText="შენიშვნა">
                     <h:outputText value="#{listvar.note}"/>
                 </p:column>
+                <p:column headerText="აქტივაციის კოდი">
+                    <h:outputText value="#{listvar.activationCode}"/>
+                </p:column>
                 <p:column headerText="დაემატა">
                     <h:outputText value="#{listvar.strCreateDate}"/>
                 </p:column>
@@ -72,6 +75,13 @@
                     <p:commandButton title="წაშლა" rendered="#{!utilBean.operator}"
                                      icon="ui-icon-trash"
                                      oncomplete="confirmOfLeadEmailDeletion.show();">
+                        <f:setPropertyActionListener value="#{listvar}" target="#{emailBean.slctedLeadEmail}"/>
+                    </p:commandButton>
+                    <p:commandButton title="დომესტიკის და ინვოისის ბაზაში განახლება" rendered="#{!utilBean.operator}"
+                                     action="#{emailBean.initEmailsDialog(1, listvar)}" value="DHL/Ivoices"
+                                     icon="ui-icon-transferthick-e-w"
+                                     update="@(#dhlOrInvoiceDbSyncFormId)"
+                                     oncomplete="dhlOrInvoiceDbSyncWidgDlg.show();">
                         <f:setPropertyActionListener value="#{listvar}" target="#{emailBean.slctedLeadEmail}"/>
                     </p:commandButton>
                 </p:column>
@@ -109,6 +119,46 @@
                 </f:facet>
             </p:ajaxStatus>
         </h:form>
+
+        <p:dialog widgetVar="dhlOrInvoiceDbSyncWidgDlg" position="center" modal="true"
+                  header="დომესტიკის და ინვოისის ბაზაში განახლება" resizable="false" width="700">
+            <h:form id="dhlOrInvoiceDbSyncFormId" prependId="false">
+                <p:growl id="idhlOrInvoiceDbSyncFormIdrowlid" showDetail="true" life="5000"/>
+
+                <p:panelGrid columns="2" style="width: 100%; margin-top: 10px;" styleClass="pnlGridClass">
+                    <h:outputLabel value="დომესტიკში განახლება"/>
+                    <h:selectOneRadio styleClass="radioTable" value="#{emailBean.slctedLeadEmail.dhlDb}">
+                        <f:selectItem itemValue="1" itemLabel="არა"/>
+                        <f:selectItem itemValue="2" itemLabel="კი"/>
+                    </h:selectOneRadio>
+                    <h:outputLabel value="ინვოისებში განახლება"/>
+                    <h:selectOneRadio styleClass="radioTable" value="#{emailBean.slctedLeadEmail.invoiceDb}">
+                        <f:selectItem itemValue="1" itemLabel="არა"/>
+                        <f:selectItem itemValue="2" itemLabel="კი"/>
+                    </h:selectOneRadio>
+                </p:panelGrid>
+
+                <p:panelGrid columns="2" style="width: 100%; margin-top: 0;" styleClass="pnlGridClass">
+                    <p:commandButton value="დახურვა"
+                                     icon="ui-icon-close"
+                                     style=" font-weight: normal !important; font-size: 14px!important;"
+                                     onclick="dhlOrInvoiceDbSyncWidgDlg.hide();"/>
+                    <h:panelGroup layout="block">
+                        <center>
+                            <p:commandButton value="დამახსოვრება"
+                                             action="#{emailBean.syncWithDhlOrInvoices}"
+                                             icon="ui-icon-disk"
+                                             widgetVar="leadsavewidget2"
+                                             onclick="leadsavewidget2.disable();"
+                                             oncomplete="leadsavewidget2.enable();"
+                                             update="@(#emailsMainFormId)"
+                                             style=" font-weight: normal !important; font-size: 18px!important; width: 70%;"/>
+                        </center>
+                    </h:panelGroup>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
 
         <p:dialog widgetVar="insertEmailDLGwidg" position="center" modal="true"
                   header="ელ. ფოსტის დამატება/რედაქტირება" resizable="false" width="700">

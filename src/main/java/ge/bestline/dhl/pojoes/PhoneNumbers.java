@@ -7,6 +7,7 @@ public class PhoneNumbers implements Serializable {
     private String phoneNum;
     private int leadId;
     private int confirmed;
+    private int mobileOrNot;
     private String note;
     private String activationCode;
     private String strCreateDate;
@@ -14,7 +15,7 @@ public class PhoneNumbers implements Serializable {
     public PhoneNumbers() {
     }
 
-    public PhoneNumbers(int id, String phoneNum, int leadId, int confirmed, String note, String activationCode, String strCreateDate) {
+    public PhoneNumbers(int id, String phoneNum, int leadId, int confirmed, String note, String activationCode, String strCreateDate, int mobileOrNot) {
         this.id = id;
         this.phoneNum = phoneNum;
         this.leadId = leadId;
@@ -22,6 +23,15 @@ public class PhoneNumbers implements Serializable {
         this.note = note;
         this.activationCode = activationCode;
         this.strCreateDate = strCreateDate;
+        this.mobileOrNot = mobileOrNot;
+    }
+
+    public int getMobileOrNot() {
+        return mobileOrNot;
+    }
+
+    public void setMobileOrNot(int mobileOrNot) {
+        this.mobileOrNot = mobileOrNot;
     }
 
     public int getId() {

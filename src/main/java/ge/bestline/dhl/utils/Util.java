@@ -73,6 +73,7 @@ public class Util implements Serializable {
         }
     }
 
+
     public static String paginator(int total_pages, int p, int limit, String targetpage, int adjacents) {
         targetpage = targetpage.replaceAll("(\\&(p|ns)\\=[0-9]+)", "");
 

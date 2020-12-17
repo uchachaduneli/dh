@@ -21,13 +21,16 @@ public class PhonesBean implements Serializable {
 
     private boolean phoneEdit;
     private Integer leadId;
+    private int currentUserId;
+
     private String company;
 
     public PhonesBean() {
-        if (Util.getSessionParameter("userId") != null) {
+        currentUserId = (int) Util.getSessionParameter("userId");
+        if (currentUserId > 0) {
             try {
                 leadId = Util.getGetParam("leadId");
-                if (leadId == null) {
+                if (leadId == 0) {
                     Messages.error("კომპანიის შესახებ ინფორმაციის წამოღება ვერ ხერხდება დაბრუნდით მთავარ გვერდზე");
                     return;
                 }
@@ -48,14 +51,12 @@ public class PhonesBean implements Serializable {
     }
 
     public boolean isMobile(String p) {
-        if (p.startsWith("+") || p.startsWith("5"))
-            return true;
-        return false;
+        return p.startsWith("+9955") || p.startsWith("5");
     }
 
     public void loadLeadPhones() {
         try {
-            Map<String, List<PhoneNumbers>> res = DbProcessing.getLeadPhoneNums(leadId);
+            Map<String, List<PhoneNumbers>> res = DbProcessing.getLeadPhoneNums(leadId, false);
             Map.Entry<String, List<PhoneNumbers>> entr = res.entrySet().iterator().next();
             leadsPhones = entr.getValue();
             company = entr.getKey();
@@ -69,6 +70,7 @@ public class PhonesBean implements Serializable {
     public void confirmPhoneManually() {
         PhoneNumbers tmp = slctedLeadPhone;
         tmp.setConfirmed(2);
+        tmp.setActivationCode(null);
         if (DbProcessing.phoneAction(tmp) > 0) {
             slctedLeadPhone = new PhoneNumbers();
             Util.executeScript("confirmOfLeadphoneManualWidg.hide()");
@@ -85,10 +87,11 @@ public class PhonesBean implements Serializable {
             ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
             tmp.setActivationCode(Util.genetareConfirmCode());
             Map<Integer, List<String>> numbers = new HashMap<>();
-            numbers.put(1, Arrays.asList(tmp.getPhoneNum()));
+            numbers.put(1, Arrays.asList(tmp.getPhoneNum().startsWith("5") ? "995" + tmp.getPhoneNum() : tmp.getPhoneNum()));
             DhlSMS.sendSms(confParams.getConfirm_sms_template()
                             .replace("{ACTIVATIONCODE}", tmp.getActivationCode())
-                    , numbers);
+                            .replace("{URLPARAMS}", tmp.getId() + "/" + tmp.getActivationCode())
+                    , numbers, currentUserId);
         } catch (ConfigurationException e) {
             Messages.warn(e.getMessage());
             e.printStackTrace();

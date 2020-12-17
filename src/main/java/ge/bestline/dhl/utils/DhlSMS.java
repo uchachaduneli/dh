@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class DhlSMS implements Serializable {
 
-    public static void sendSms(String text, Map<Integer, List<String>> numbers) throws SQLException, IOException, ConfigurationException {
+    public static void sendSms(String text, Map<Integer, List<String>> numbers, int userId) throws SQLException, IOException, ConfigurationException {
         final ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
         List<SentSMSes> smsforDb = new ArrayList<SentSMSes>();
         SentSMSes sms;
@@ -50,7 +50,7 @@ public class DhlSMS implements Serializable {
         }
 
         if (!smsforDb.isEmpty()) {
-            DbProcessing.insertSmsHistory(smsforDb);
+            DbProcessing.insertSmsHistory(smsforDb, userId);
         }
 
     }

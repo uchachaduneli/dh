@@ -10,21 +10,40 @@ public class SentSMSes implements Serializable {
     private String text;
     private String response;
     private String strSendTime;
+    private String sentUser;
     private String leadData;//company name , ident code
     private Date sendDateStart;
     private Date sendDateEnd;
     private int status;
+    private int sentUserId;
 
     public SentSMSes() {
     }
 
-    public SentSMSes(int id, Integer leadId, String to, String text, String response, String strSendTime) {
+    public SentSMSes(int id, Integer leadId, String to, String text, String response, String strSendTime, String sentUser) {
         this.id = id;
         this.leadId = leadId;
         this.to = to;
         this.text = text;
         this.response = response;
         this.strSendTime = strSendTime;
+        this.sentUser = sentUser;
+    }
+
+    public int getSentUserId() {
+        return sentUserId;
+    }
+
+    public void setSentUserId(int sentUserId) {
+        this.sentUserId = sentUserId;
+    }
+
+    public String getSentUser() {
+        return sentUser;
+    }
+
+    public void setSentUser(String sentUser) {
+        this.sentUser = sentUser;
     }
 
     public String getLeadData() {

@@ -12,11 +12,30 @@ public class SentEmails implements Serializable {
     private String strSentDate;
     private String identNumber;
     private int leadId;
+    private int userDesc;
     private String company;
     private String subject;
     private String bodyText;
     private Date sendDateStart;
     private Date sendDateEnd;
+
+    public SentEmails(int id, String subject, String bodyText, int status) {
+        this.subject = subject;
+        this.bodyText = bodyText;
+        this.id = id;
+        this.status = status;
+    }
+
+    public SentEmails() {
+    }
+
+    public int getUserDesc() {
+        return userDesc;
+    }
+
+    public void setUserDesc(int userDesc) {
+        this.userDesc = userDesc;
+    }
 
     public String getSubject() {
         return subject;

@@ -3,6 +3,8 @@ package ge.bestline.dhl.beans;
 import ge.bestline.dhl.db.processing.DbProcessing;
 import ge.bestline.dhl.pojoes.*;
 import ge.bestline.dhl.utils.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.primefaces.context.RequestContext;
@@ -13,7 +15,6 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.model.SelectItem;
 import java.io.*;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -58,10 +59,14 @@ public class LeadBean implements Serializable {
     private List<LimitHistory> leadsLimitHitoryList;
     private NewSmsOrMailOpts contaction;
     private String slctedAttachName;
+    private static final Logger logger = LogManager.getLogger(LeadBean.class);
+    private int currentUserId;
+    private int checkSmsOrMail;
+    private String smsOrEmailConrifmCode;
 
     public LeadBean() {
-
-        if (Util.getSessionParameter("userId") != null) {
+        currentUserId = (int) Util.getSessionParameter("userId");
+        if (currentUserId > 0) {
             if (Util.getSessionParameter("davalianeba") != null) {
                 searchLead.setDavalianeba((Integer) Util.getSessionParameter("davalianeba"));
             }
@@ -92,6 +97,7 @@ public class LeadBean implements Serializable {
                     hasPermissionChooser = true;
                 }
             } catch (Exception e) {
+                logger.error("Can't get Logined User's data from DB", e);
                 Util.logout();
                 return;
             }
@@ -136,12 +142,35 @@ public class LeadBean implements Serializable {
 
     }
 
+    public void sendConfirmSMSOrMail() {
+        if (smsOrEmailConrifmCode == null || smsOrEmailConrifmCode.length() == 0 || checkSmsOrMail == 0) {
+            Messages.warn("მიუთითეთ აქტივაციის ტიპი და კოდი");
+            return;
+        }
+        String res = DbProcessing.confirmSMSOrEmail(smsOrEmailConrifmCode, checkSmsOrMail == 1);
+        if (res == null) {
+            Messages.warn("მითითებული მონაცემებით ჩანაწერი ვერ მოიძებნა");
+        } else {
+            Messages.info("Confirmed " + res);
+
+        }
+        Util.executeScript("checkDLGwidg.hide()");
+        smsOrEmailConrifmCode = null;
+        checkSmsOrMail = 0;
+    }
+
     public void redirectToEmails() {
         RequestContext.getCurrentInstance().execute("window.open('emails.jsf?leadId=" + slctedLead.getLeadId() + "', '_newtab')");
     }
 
     public void redirectToPhones() {
         RequestContext.getCurrentInstance().execute("window.open('phones.jsf?leadId=" + slctedLead.getLeadId() + "', '_newtab')");
+    }
+
+    private List<Emails> getLeadEmails(Integer leadId) {
+        Map<String, List<Emails>> res = DbProcessing.getLeadEmails(leadId);
+        Map.Entry<String, List<Emails>> entr = res.entrySet().iterator().next();
+        return entr.getValue();
     }
 
     public void sendSmsOrMail() {
@@ -154,67 +183,92 @@ public class LeadBean implements Serializable {
             return;
         }
         if (contaction.getSmsOrMail() == 2) {//Sending Using Email
+            List<SentEmails> sentEmails = new ArrayList<>();
             try {
                 if (contaction.getSmsOrMailToSrchedOrOne() == 1) {// ხელით უთითებს ვისაც მიუვიდეს MAIL
-                    DhlMail.sendEmail(contaction.getSmsOrMailTo().trim().replaceAll(";", ",").replaceAll("\\s", ""),
+                    DhlMail.sendEmail(contaction.getSmsOrMailTo().trim().
+                                    replaceAll(";", ",").
+                                    replaceAll("\\s", ""),
                             contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), contaction.getAttachmentsPath());
                 } else {
                     if (contaction.getSmsOrMailToSrchedOrOne() == 2) {// დასერჩილ ქეისებს უგზავნის MAIL
                         init();
                         for (Lead lead : leads) {
-                            DhlMail.sendEmail(lead.getEmail().trim().replaceAll(";", ",").replaceAll("\\s", ""),
-                                    contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), contaction.getAttachmentsPath());
+                            getLeadEmails(lead.getLeadId()).stream().forEach(email -> {
+                                try {
+                                    DhlMail.sendEmail(email.getMail(),
+                                            contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), contaction.getAttachmentsPath());
+                                    sentEmails.add(new SentEmails(email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 1));
+                                } catch (Exception e) {
+                                    sentEmails.add(new SentEmails(email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 2));
+                                    logger.error("Can't send email To: " + email.getMail(), e);
+                                }
+                            });
+
+                        }
+                        if (!sentEmails.isEmpty()) {
+                            DbProcessing.insertEmailHistory(sentEmails, currentUserId);
                         }
                     }
                 }
                 Util.executeScript("smsDLGwidg.hide();");
                 Messages.info("შეტყობინება გაგზავნილია");
+
+
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Can't send email", e);
                 Messages.error("მეილის გაგზავნა ვერ მოხერხდა");
             }
         } else {// Sending Using SMS
-            try {
-                Map<Integer, List<String>> numbers = new HashMap<Integer, List<String>>();
-
-                if (contaction.getSmsOrMailToSrchedOrOne() == 1) {// ხელით უთითებს ვისაც მიუვიდეს SMS
-                    String[] tmpNums = contaction.getSmsOrMailTo().trim().replaceAll(";", ",").replaceAll("\\s", "").split(",");
-                    List<String> nuList = new ArrayList<String>();
-                    for (String num : tmpNums) {
-                        nuList.add(num.startsWith("5") ? "995" + num : num);
-                    }
-                    numbers.put(null, nuList);
-                    DhlSMS.sendSms(contaction.getSmsOrMailText(), numbers);
-                } else {
-                    if (contaction.getSmsOrMailToSrchedOrOne() == 2) {// დასერჩილ ქეისებს უგზავნის SMS
-                        init();
-                        for (Lead lead : leads) {
-                            if (lead.getPhone() != null && lead.getPhone().trim().length() > 0) {
-                                String tmpPhones = lead.getPhone().replaceAll("\\s", "").replaceAll(";", ",").replaceAll("/", "")
-                                        .replaceAll("\\+", "").replaceAll("-", "");
-                                String[] tmpNums = tmpPhones.trim().split(",");
-                                List<String> nuList = new ArrayList<String>();
-                                for (String number : tmpNums) {
-                                    if (number.startsWith("5") || number.startsWith("995")) {
-                                        nuList.add(number.startsWith("5") ? "995" + number : number);
-                                    }
-                                }
-                                numbers.put(lead.getLeadId(), nuList);
-                            }
+            Map<Integer, List<String>> numbers = new HashMap<Integer, List<String>>();
+            int sentsCount = 0;
+            int failedSentsCount = 0;
+            if (contaction.getSmsOrMailToSrchedOrOne() == 1) {// ხელით უთითებს ვისაც მიუვიდეს SMS
+                String[] tmpNums = contaction.getSmsOrMailTo().trim().
+                        replaceAll(";", ",").
+                        replaceAll("\\s", "").
+                        split(",");
+                List<String> nuList = new ArrayList<String>();
+                for (String num : tmpNums) {
+                    nuList.add(num.startsWith("5") ? "995" + num : num);
+                }
+                numbers.put(null, nuList);
+                try {
+                    DhlSMS.sendSms(contaction.getSmsOrMailText(), numbers, currentUserId);
+                } catch (Exception e) {
+                    failedSentsCount++;
+                    logger.error("Sending SMSes Failed", e);
+                }
+            } else {
+                if (contaction.getSmsOrMailToSrchedOrOne() == 2) {// დასერჩილ ქეისებს უგზავნის SMS
+                    init();
+                    for (Lead l : leads) {
+                        numbers = new HashMap<>();
+                        List<String> numsList = new ArrayList<>();
+                        List<PhoneNumbers> tmpLeadNumsList = DbProcessing.getLeadPhoneNums(l.getLeadId(), true)
+                                .entrySet().stream()
+                                .findAny().get().getValue();
+                        tmpLeadNumsList.stream().forEach(numObj -> {
+                            if (numObj.getPhoneNum().startsWith("5"))
+                                numObj.setPhoneNum("995" + numObj.getPhoneNum());
+                            numsList.add(numObj.getPhoneNum());
+                        });
+                        numbers.put(l.getLeadId(), numsList);
+                        try {
+                            DhlSMS.sendSms(contaction.getSmsOrMailText(), numbers, currentUserId);
+                            sentsCount++;
+                        } catch (Exception e) {
+                            failedSentsCount++;
+                            logger.error("Error During Sending SMS for LeadId: " + l.getLeadId(), e);
                         }
-                        DhlSMS.sendSms(contaction.getSmsOrMailText(), numbers);
                     }
                 }
-                Util.executeScript("smsDLGwidg.hide();");
-                Messages.info("შეტყობინება გაგზავნილია");
-            } catch (SQLException e) {
-                Messages.error("შეტყობინების(ების) სტატუსის ბაზაში შენახვა ვერ მოხერხდა");
-            } catch (java.net.SocketTimeoutException e) {
-                Messages.error("პროვაიდერთან დაკავშირება ვერ ხერხდება");
-            } catch (IOException e) {
-                Messages.error("შეტყობინების(ების) გაგზავნა ვერ მოხერხდა");
-            } catch (ConfigurationException e) {
-                Messages.error("კონფიგურაციის წაკითხვა ვერ მოხერხდა");
+            }
+            Util.executeScript("smsDLGwidg.hide();");
+            if (failedSentsCount == 0) {
+                Messages.info("შეტყობინება გაგზავნილია კომპანიის(ების) მობილურ ნომრებზე");
+            } else {
+                Messages.error(failedSentsCount + " კომპანიისთვის შეტყობინების გაგზავნა ვერ მოხერხდა, გთხოვთ გადაამოწმოთ მობილური ნომრების ვალიდურობა");
             }
         }
     }
@@ -314,14 +368,14 @@ public class LeadBean implements Serializable {
             if (DbProcessing.actionLeads(slctedLead) > 0) {
                 //            leads.remove(slctedLead);
                 init();
-                Messages.info(Util.ka("operacia dasrulda warmatebiT"));
+                Messages.info("ოპერაცია დასრულდა წარმატებით");
                 RequestContext.getCurrentInstance().update("@(#operHomeForm)");
                 Util.executeScript("confirmOfLeadDeletion.hide();");
             } else {
-                Messages.error(Util.ka("monacemis waSla ver xerxdeba"));
+                Messages.error("მონაცემის წაშლა ვერ ხერხდება");
             }
         } catch (Exception e) {
-            Messages.warn(Util.ka("Canaweri moniSnuli araa"));
+            Messages.warn("ჩანაწერი მონიშნული არაა");
         }
 
     }
@@ -411,12 +465,9 @@ public class LeadBean implements Serializable {
             start = (p - 1) * rowLimit;
         }
         int fullCount = 0;
-        try {
-            fullCount = DbProcessing
-                    .getLeadsCount(searchLead, 0, loginedUser.getId(), leadStatusId, expiredAlert, limitedAlert, callAlert, payAlert,
-                            emptyIdent);
-        } catch (Exception e) {
-        }
+        fullCount = DbProcessing
+                .getLeadsCount(searchLead, 0, loginedUser.getId(), leadStatusId, expiredAlert, limitedAlert, callAlert, payAlert,
+                        emptyIdent);
 
         leads = DbProcessing
                 .getLeads(searchLead, 0, loginedUser.getId(), leadStatusId, start, rowLimit, expiredAlert, limitedAlert, callAlert,
@@ -1037,5 +1088,21 @@ public class LeadBean implements Serializable {
 
     public void setSlctedAttachName(String slctedAttachName) {
         this.slctedAttachName = slctedAttachName;
+    }
+
+    public int getCheckSmsOrMail() {
+        return checkSmsOrMail;
+    }
+
+    public void setCheckSmsOrMail(int checkSmsOrMail) {
+        this.checkSmsOrMail = checkSmsOrMail;
+    }
+
+    public String getSmsOrEmailConrifmCode() {
+        return smsOrEmailConrifmCode;
+    }
+
+    public void setSmsOrEmailConrifmCode(String smsOrEmailConrifmCode) {
+        this.smsOrEmailConrifmCode = smsOrEmailConrifmCode;
     }
 }

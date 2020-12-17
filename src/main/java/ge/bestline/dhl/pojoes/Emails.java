@@ -10,11 +10,15 @@ public class Emails implements Serializable {
     private String note;
     private String activationCode;
     private String strCreateDate;
+    private int dhlDb;
+    private int invoiceDb;
 
     public Emails() {
     }
 
-    public Emails(int id, String mail, int leadId, int confirmed, String note, String activationCode, String strCreateDate) {
+    public Emails(int id, String mail, int leadId, int confirmed,
+                  String note, String activationCode,
+                  String strCreateDate, int dhlDb, int invoiceDb) {
         this.id = id;
         this.mail = mail;
         this.leadId = leadId;
@@ -22,6 +26,24 @@ public class Emails implements Serializable {
         this.note = note;
         this.activationCode = activationCode;
         this.strCreateDate = strCreateDate;
+        this.dhlDb = dhlDb;
+        this.invoiceDb = invoiceDb;
+    }
+
+    public int getInvoiceDb() {
+        return invoiceDb;
+    }
+
+    public void setInvoiceDb(int invoiceDb) {
+        this.invoiceDb = invoiceDb;
+    }
+
+    public int getDhlDb() {
+        return dhlDb;
+    }
+
+    public void setDhlDb(int dhlDb) {
+        this.dhlDb = dhlDb;
     }
 
     public int getId() {

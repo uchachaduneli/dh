@@ -12,13 +12,13 @@
             <p:commandButton value="|" update="@form" action="#{emailsBean.init()}"
                              style="width: 0; height: 0; margin-left: 0.2%"/>
             <p:panel header="" style="height: 75px;">
-                <div style="text-align: center;">
+                <center>
                     <p:watermark for="historyFromDateID" value="თარიღი დან"/>
                     <p:watermark for="historyToDateID" value="მდე"/>
                     <p:watermark for="srchToId" value="ადრესატი"/>
                     <p:watermark for="srchTextId" value="საიდენტ. N"/>
                     <p:watermark for="srchSubjectId" value="subject"/>
-                    <p:panelGrid columns="8">
+                    <p:panelGrid columns="9">
                         <p:calendar navigator="true" value="#{emailsBean.searchObj.sendDateStart}"
                                     id="historyFromDateID">
                             <p:ajax event="dateSelect" listener="#{emailsBean.validateFromDateFilter()}"
@@ -69,7 +69,7 @@
                             <p:ajax event="change" update="@form" listener="#{emailsBean.rowsCountChangeListener()}"/>
                         </p:selectOneMenu>
                     </p:panelGrid>
-                </div>
+                </center>
             </p:panel>
             <h:panelGroup style="margin: 5px;">
                 <h:outputFormat escape="false" value="#{emailsBean.paginator}" class="case-dttbl-paginator-facet"/>
@@ -101,14 +101,14 @@
                 <p:column headerText="Note">
                     <h:outputText value="#{var.note}"/>
                 </p:column>
-                <p:column headerText="სტატუსი">
-                    <div style="text-align: center;">
-                        <h:outputText styleClass="ui-icon ui-icon-check" rendered="#{var.status eq 1}"/>
-                        <h:outputText styleClass="ui-icon ui-icon-closethick" rendered="#{var.status ne 1}"/>
-                    </div>
-                </p:column>
                 <p:column headerText="დრო">
                     <h:outputText style="width: 100%;" value="#{var.strSentDate}"/>
+                </p:column>
+                <p:column headerText="სტატუსი">
+                    <h:outputText styleClass="ui-icon ui-icon-check" style="margin: 0 auto;"
+                                  rendered="#{var.status eq 1}"/>
+                    <h:outputText styleClass="ui-icon ui-icon-closethick" style="margin: 0 auto;"
+                                  rendered="#{var.status ne 1}"/>
                 </p:column>
                 <f:facet name="footer" class="case-dttbl-paginator-facet">
                 </f:facet>

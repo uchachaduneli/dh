@@ -7,6 +7,7 @@ package ge.bestline.dhl.beans;
 
 import ge.bestline.dhl.db.processing.DbProcessing;
 import ge.bestline.dhl.pojoes.SentSMSes;
+import ge.bestline.dhl.pojoes.User;
 import ge.bestline.dhl.utils.Constants;
 import ge.bestline.dhl.utils.Messages;
 import ge.bestline.dhl.utils.Util;
@@ -32,6 +33,7 @@ public class SmsBean implements Serializable {
     private int rowLimit = 15;
     private String paginator;
     private List<SelectItem> rowCountList;
+    private List<SelectItem> usersSelection = new ArrayList<SelectItem>();
 
     public SmsBean() {
         if (Util.getSessionParameter("userId") != null) {
@@ -53,7 +55,16 @@ public class SmsBean implements Serializable {
             if (Util.getSessionParameter("company") != null) {
                 searchObj.setLeadData((String) Util.getSessionParameter("company"));
             }
+            if (Util.getSessionParameter("sent_user_id") != null) {
+                searchObj.setSentUserId((Integer) Util.getSessionParameter("sent_user_id"));
+            }
             loadRowCountList();
+            if (usersSelection.isEmpty()) {
+                List<User> workers = DbProcessing.getUsers(0, "", "");
+                for (User user : workers) {
+                    usersSelection.add(new SelectItem(user.getId(), user.getDescription()));
+                }
+            }
             init();
         } else {
             Util.logout();
@@ -106,6 +117,13 @@ public class SmsBean implements Serializable {
     public void filterStatus() {
         try {
             Util.setSessionParameter("status", searchObj.getStatus());
+        } catch (Exception e) {
+        }
+    }
+
+    public void filterSaleOrAdmin() {
+        try {
+            Util.setSessionParameter("sent_user_id", searchObj.getSentUserId());
         } catch (Exception e) {
         }
     }
@@ -231,5 +249,13 @@ public class SmsBean implements Serializable {
 
     public void setRowCountList(List<SelectItem> rowCountList) {
         this.rowCountList = rowCountList;
+    }
+
+    public List<SelectItem> getUsersSelection() {
+        return usersSelection;
+    }
+
+    public void setUsersSelection(List<SelectItem> usersSelection) {
+        this.usersSelection = usersSelection;
     }
 }

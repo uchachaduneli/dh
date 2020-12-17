@@ -24,11 +24,11 @@ public class DhlMail implements Serializable {
 
     public static void sendEmail(String Bcc, String subject, String text, List<String> attachments) throws MessagingException, IOException, ConfigurationException {
 
-        final ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
+        ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
 
         props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.port", confParams.getSmtp_port());
-        props.put("mail.smtp.host", confParams.getSmtp_host());
+        props.put("mail.smtp.host", "smtp.eu.mailgun.org");
+        props.put("mail.smtp.port", "587");
         props.put("mail.smtp.auth", "true");
 
         InternetAddress[] myBccList = InternetAddress.parse(Bcc);
@@ -41,7 +41,7 @@ public class DhlMail implements Serializable {
                 });
         Message message = new MimeMessage(session);
         message.setFrom(new InternetAddress(confParams.getSender_email()));
-        message.setRecipients(Message.RecipientType.BCC, myBccList); // BCC -ში ყრია კლიენტების მეილები
+        message.setRecipients(Message.RecipientType.TO, myBccList); // BCC -ში ყრია კლიენტების მეილები
 
         message.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
         message.setHeader("Content-Type", "text/plain; charset=UTF-8");

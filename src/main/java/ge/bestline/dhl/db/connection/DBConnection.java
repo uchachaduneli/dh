@@ -1,9 +1,14 @@
 package ge.bestline.dhl.db.connection;
 
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
 
 /**
  * @author Ucha Chaduneli
@@ -16,6 +21,7 @@ public class DBConnection implements Serializable {
     private static final String dbUserName = "root";
     private static final String dbPassword = "root";
     private static Connection dbConn;
+    private static final Logger logger = LogManager.getLogger(DBConnection.class);
 
     public static Connection getDbConn() {
         try {
@@ -23,9 +29,8 @@ public class DBConnection implements Serializable {
                 Class.forName(dbDriver).getDeclaredConstructor().newInstance();
                 dbConn = DriverManager.getConnection(dbUrl + dbName, dbUserName, dbPassword);
             }
-        } catch (SQLException ex) {
-            dbConn = null;
         } catch (Exception ex) {
+            logger.error("Can't Connect To Mysql DB ", ex);
             dbConn = null;
         }
         return dbConn;
@@ -43,6 +48,7 @@ public class DBConnection implements Serializable {
                 }
             }
         } catch (Exception ex) {
+            logger.error("Can't Check Mysql dbConn.isClosed()", ex);
             return false;
         }
     }
@@ -53,6 +59,7 @@ public class DBConnection implements Serializable {
                 Class.forName(dbDriver).newInstance();
                 dbConn = DriverManager.getConnection(dbUrl + dbName, dbUserName, dbPassword);
             } catch (Exception ex) {
+                logger.error("Can't Open Mysql DB Connection", ex);
             }
         }
     }
@@ -66,6 +73,7 @@ public class DBConnection implements Serializable {
                 }
             }
         } catch (SQLException ex) {
+            logger.error("Can't Close Mysql DB Connection", ex);
         }
     }
 }

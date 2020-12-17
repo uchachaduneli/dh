@@ -2,8 +2,12 @@ package ge.bestline.dhl.db.processing;
 
 import com.mysql.jdbc.CallableStatement;
 import ge.bestline.dhl.db.connection.DBConnection;
+import ge.bestline.dhl.db.connection.DhlCon;
+import ge.bestline.dhl.db.connection.InvoiceCon;
 import ge.bestline.dhl.pojoes.*;
 import ge.bestline.dhl.utils.Util;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.faces.model.SelectItem;
 import java.io.Serializable;
@@ -17,6 +21,7 @@ import java.util.*;
  */
 public class DbProcessing implements Serializable {
     static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+    private static final Logger logger = LogManager.getLogger(DbProcessing.class);
 
     /*
      * tu userId -1 gadavcem pirvel parametrad amowmebs usernami - passwordit
@@ -71,6 +76,7 @@ public class DbProcessing implements Serializable {
             }
             return types;
         } catch (SQLException ex) {
+            logger.error("Can't retrieve user types", ex);
             return null;
         } finally {
             DBConnection.closeDbConn();
@@ -101,12 +107,15 @@ public class DbProcessing implements Serializable {
             ResultSet res = cs.executeQuery("select * from emails where lead_id='" + leadId + "'");
             while (res.next()) {
                 list.add(new Emails(res.getInt("id"),
-                        res.getString("mail"),
-                        res.getInt("lead_id"),
-                        res.getInt("confirmed"),
-                        res.getString("note"),
-                        res.getString("activation_code"),
-                        dateFormat.format(res.getTimestamp("create_date")))
+                                res.getString("mail"),
+                                res.getInt("lead_id"),
+                                res.getInt("confirmed"),
+                                res.getString("note"),
+                                res.getString("activation_code"),
+                                dateFormat.format(res.getTimestamp("create_date")),
+                                res.getInt("dhl_db"),
+                                res.getInt("invoice_db")
+                        )
                 );
             }
             res = cs.executeQuery("select concat(company_name,'(#', company_id_number, ')') from leads where lead_id='" + leadId + "'");
@@ -115,25 +124,30 @@ public class DbProcessing implements Serializable {
             }
             return map;
         } catch (Exception exception) {
+            logger.error(" getting Lead Emails", exception);
             return null;
         }
     }
 
-    public static Map<String, List<PhoneNumbers>> getLeadPhoneNums(int leadId) {
+    public static Map<String, List<PhoneNumbers>> getLeadPhoneNums(int leadId, boolean mobilesOnly) {
         Map<String, List<PhoneNumbers>> map = new HashMap<String, List<PhoneNumbers>>();
         List<PhoneNumbers> list = new ArrayList<PhoneNumbers>();
         try {
             DBConnection.openDbConn();
             Statement cs = DBConnection.getDbConn().createStatement();
-            ResultSet res = cs.executeQuery("select * from phone_numbers where lead_id='" + leadId + "'");
+            String query = "select * from phone_numbers where lead_id='" + leadId + "' ";
+            if (mobilesOnly) query += "and mobile_or_not = '1'";
+            ResultSet res = cs.executeQuery(query);
             while (res.next()) {
                 list.add(new PhoneNumbers(res.getInt("id"),
-                        res.getString("phone_num"),
-                        res.getInt("lead_id"),
-                        res.getInt("confirmed"),
-                        res.getString("note"),
-                        res.getString("activation_code"),
-                        dateFormat.format(res.getTimestamp("create_date")))
+                                res.getString("phone_num"),
+                                res.getInt("lead_id"),
+                                res.getInt("confirmed"),
+                                res.getString("note"),
+                                res.getString("activation_code"),
+                                dateFormat.format(res.getTimestamp("create_date")),
+                                res.getInt("mobile_or_not")
+                        )
                 );
             }
             res = cs.executeQuery("select concat(company_name,'(#', company_id_number, ')') from leads where lead_id='" + leadId + "'");
@@ -142,7 +156,8 @@ public class DbProcessing implements Serializable {
             }
             return map;
         } catch (Exception exception) {
-            return null;
+            logger.error(" getting Lead Phones", exception);
+            return new HashMap<String, List<PhoneNumbers>>();
         }
     }
 
@@ -165,9 +180,213 @@ public class DbProcessing implements Serializable {
             cs.execute();
             return cs.getInt("p_result_id");
         } catch (SQLException exception) {
+            logger.error(" users save-update", exception);
             return 0;
         } finally {
             DBConnection.closeDbConn();
+        }
+    }
+
+
+    public static List<String> syncWithDhlOrInvoices(Emails email) {
+        List<String> result = new ArrayList<>();
+        String companyIdenNum = null;
+        boolean success = true;
+        try {
+            DBConnection.openDbConn();
+            Statement cs = DBConnection.getDbConn().createStatement();
+            ResultSet res = cs.executeQuery("select company_id_number from leads where lead_id='" + email.getLeadId() + "'");
+            while (res.next()) {
+                companyIdenNum = res.getString(1);
+            }
+        } catch (Exception e) {
+            result.add("ხელშეკრულებების ბაზაში ინფორმაციის დამუშავება ვერ მოხერხდა");
+            logger.error(" sync With Dhl Or Invoices DB", e);
+            return result;
+        }
+
+        // მაიესქუელიდან დატა მოგროვებულია და იწყება რემოუთ ბაზებში ცვლილებების გაშვება
+        if (email != null && companyIdenNum != null) {
+            //update or insert into DHL database
+            if (email.getDhlDb() == 2) {
+                RemoteDbObj dhlObj = null;
+                try {
+                    DhlCon.openDbConn();
+                    Statement cs = DhlCon.getDbConn().createStatement();
+//                    ResultSet res = cs.executeQuery("select ID from Contacts where Name = 'accountant'");
+                    ResultSet res = cs.executeQuery("select c.ID from Contacts c where c.Name = 'accountant' " +
+                            "and c.ClientID = (select cl.ID from Clients cl where cl.IdentificationNumber='"
+                            + companyIdenNum.trim() + "')");
+                    while (res.next()) {
+                        dhlObj = new RemoteDbObj();
+                        dhlObj.setContactId(res.getInt(1));
+                    }
+                    if (dhlObj == null) {// tu bugaltris contacti ar arsebobs insert new
+                        createDhlContact(companyIdenNum, email.getMail());
+                    } else {// tu arsebobs update
+                        updateDhlContact(dhlObj.getContactId(), email.getMail());
+                    }
+                } catch (Exception e) {
+                    result.add("დომესტიკის ბაზაში ინფორმაციის განახლება ვერ მოხერხდა");
+                    if (e.getMessage().contains("---"))
+                        result.add(e.getMessage());
+                    logger.error(" during update or insert into DHL database: ", e);
+                    success = false;
+                } finally {
+                    DhlCon.closeDbConn();
+                }
+            } else {// ubralod gamourtia remote bazastan sinqi
+                try {
+                    Statement cs = DBConnection.getDbConn().createStatement();
+                    cs.executeUpdate("update emails set dhl_db = 1  where id='" + email.getId() + "'");
+                } catch (SQLException throwables) {
+                    logger.error(" disabling sync With Dhl DB", throwables);
+                }
+            }
+            //update or insert into Invoices database
+            if (email.getInvoiceDb() == 2) {
+                RemoteDbObj invoicesObj = null;
+                try {
+                    InvoiceCon.openDbConn();
+                    Statement cs = InvoiceCon.getDbConn().createStatement();
+//                    ResultSet res = cs.executeQuery("select ID from Contacts where FullName = 'accountant'");
+                    ResultSet res = cs.executeQuery("select c.ID from Contacts c where c.FullName = 'accountant' " +
+                            "and c.ClientID = (select cl.ID from Clients cl where cl.IdentificationNumber='" +
+                            companyIdenNum.trim() + "')");
+                    while (res.next()) {
+                        invoicesObj = new RemoteDbObj();
+                        invoicesObj.setContactId(res.getInt(1));
+                    }
+                    if (invoicesObj == null) {// tu bugaltris contacti ar arsebobs insert new
+                        createInvoicesDbContact(companyIdenNum, email.getMail());
+                    } else {// tu arsebobs update
+                        updateInvoicesDbContact(invoicesObj.getContactId(), email.getMail());
+                    }
+
+                } catch (Exception e) {
+                    result.add("ინვოისის ბაზაში ინფორმაციის განახლება ვერ მოხერხდა");
+                    if (e.getMessage().contains("---"))
+                        result.add(e.getMessage());
+                    logger.error(" during update or insert into Invoices database: ", e);
+                    success = false;
+                } finally {
+                    InvoiceCon.closeDbConn();
+                }
+            } else {// ubralod gamourtia remote bazastan sinqi
+                try {
+                    Statement cs = DBConnection.getDbConn().createStatement();
+                    cs.executeUpdate("update emails set invoice_db = 1  where id='" + email.getId() + "'");
+                } catch (SQLException throwables) {
+                    logger.error(" during disabling sync With Invoice DB in Mysql", throwables);
+                }
+            }
+
+        } else {
+            result.add("ხელშეკრულებების ბაზაში მოცემულ კომპანიაზე საიდენტიფიკაციო კოდი არ ფიქსირედება");
+            success = false;
+        }
+        if (success) {
+            result.add("ოპერაცია დასრულდა წარმატებით.");
+            updateContactDbStatuses(email);
+        }
+        return result;
+    }
+
+    public static void updateContactDbStatuses(Emails email) {
+        try {
+            String columns = null;
+            String columns2 = null;
+            if (email.getInvoiceDb() == 2 && email.getDhlDb() == 2) {
+                columns = "invoice_db = '1', dhl_db='1'";
+                columns2 = "invoice_db = '2', dhl_db='2'";
+            } else if (email.getInvoiceDb() == 2 && email.getDhlDb() == 1) {
+                columns = "invoice_db = '1'";
+                columns2 = "invoice_db = '2'";
+            } else if (email.getInvoiceDb() == 1 && email.getDhlDb() == 2) {
+                columns = "dhl_db='1'";
+                columns2 = "dhl_db = '2'";
+            }
+            if (columns != null && columns2 != null) {
+                DBConnection.openDbConn();
+                Statement cs = DBConnection.getDbConn().createStatement();
+                cs.executeUpdate("update emails set " + columns + "  where lead_id='" + email.getLeadId() + "'");
+                cs.executeUpdate("update emails set " + columns2 + "  where id='" + email.getId() + "'");
+            }
+        } catch (Exception e) {
+            logger.error(" update Contact Db Statuses in Mysql", e);
+        } finally {
+            DBConnection.closeDbConn();
+        }
+    }
+
+    public static void createInvoicesDbContact(String companyIdenNum, String email) throws Exception {
+        InvoiceCon.openDbConn();
+        Statement cs = InvoiceCon.getDbConn().createStatement();
+        ResultSet res = cs.executeQuery("select ID from Clients where RTRIM(LTRIM(IdentificationNumber))='" + companyIdenNum.trim() + "'");
+        RemoteDbObj dhlObj = null;
+        while (res.next()) {
+            dhlObj = new RemoteDbObj();
+            dhlObj.setClientId(res.getInt(1));
+        }
+        if (dhlObj != null) {
+            Statement cs2 = InvoiceCon.getDbConn().createStatement();
+            if (cs2.executeUpdate("insert into Contacts(ClientID, FullName, Phone, Email, RecordDate) " +
+                    "values (" + dhlObj.getClientId() + ",'accountant','-', '" + email + "', CURRENT_TIMESTAMP)") < 1) {
+                logger.error(" inserting Contact in Invoices Db");
+                throw new SQLException("--- ინვოისის ბაზაში კონტაქტი ვერ დაემატა" + companyIdenNum);
+            } else {
+                logger.info("Successfylly created Inoice DB Contact for IdentNumber: " + companyIdenNum + " Email: " + email);
+            }
+        } else {
+            logger.error(" Can't find Clients record in Invoices Db with IdenNumber: " + companyIdenNum);
+            throw new SQLException("--- მოცემული საიდენტიფიკაციო ნომრით ინვოისის ბაზაში კლიენტი ვე მოიძებნა" + companyIdenNum);
+        }
+    }
+
+    public static void updateInvoicesDbContact(Integer Id, String email) throws SQLException {
+        InvoiceCon.openDbConn();
+        Statement cs2 = InvoiceCon.getDbConn().createStatement();
+        if (cs2.executeUpdate("update Contacts set Email = '" + email + "' where ID = '" + Id + "'") < 1) {
+            throw new SQLException("--- ინვოისის ბაზაში კონტაქტი ვერ განახლდა: " + email);
+        } else {
+            logger.info("Successfylly updated Invoice Db Contact with ID: " + Id + " Email: " + email);
+        }
+    }
+
+    public static void createDhlContact(String companyIdenNum, String email) throws Exception {
+        DhlCon.openDbConn();
+        Statement cs = DhlCon.getDbConn().createStatement();
+        ResultSet res = cs.executeQuery("select ID from Clients where RTRIM(LTRIM(IdentificationNumber))='" + companyIdenNum.trim() + "'");
+        RemoteDbObj dhlObj = null;
+        while (res.next()) {
+            dhlObj = new RemoteDbObj();
+            dhlObj.setClientId(res.getInt(1));
+        }
+        if (dhlObj != null) {
+            System.out.println("Client with identNum" + companyIdenNum + " Found DHl DB ID=" + dhlObj.getClientId());
+            Statement cs2 = DhlCon.getDbConn().createStatement();
+            int ins = cs2.executeUpdate("insert into Contacts(ClientID, Name, Email, RecordDate) " +
+                    "values (" + dhlObj.getClientId() + ",'accountant', '" + email + "', CURRENT_TIMESTAMP)");
+            if (ins < 1) {
+                logger.error(" Can't find Contact in DHL db with IdentNum: " + companyIdenNum);
+                throw new SQLException("--- დომესტიკის ბაზაში კონტაქტი ვერ დაემატა" + companyIdenNum);
+            } else {
+                logger.info("Successfylly created DHL DB Contact for IdentNumber: " + companyIdenNum + " Email: " + email);
+            }
+        } else {
+            logger.error(" Can't find Clients record in DHL Db with IdenNumber: " + companyIdenNum);
+            throw new SQLException("--- მოცემული საიდენტიფიკაციო ნომრით დომესტიკის ბაზაში კლიენტი ვერ მოიძებნა" + companyIdenNum);
+        }
+    }
+
+    public static void updateDhlContact(Integer Id, String email) throws SQLException {
+        DhlCon.openDbConn();
+        Statement cs2 = DhlCon.getDbConn().createStatement();
+        if (cs2.executeUpdate("update Contacts set Email = '" + email + "' where ID = '" + Id + "'") < 1) {
+            logger.error(" Can't update Contact in DHL DB with email: " + email + " Id: " + Id);
+            throw new SQLException("--- დომესტიკის ბაზაში კონტაქტი ვერ განახლდა: " + email);
+        } else {
+            logger.info("Successfylly updated Dhl Db Contact with ID: " + Id + " Email: " + email);
         }
     }
 
@@ -175,24 +394,24 @@ public class DbProcessing implements Serializable {
         try {
             DBConnection.openDbConn();
             CallableStatement cs;
-            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_email(?,?,?,?,?,?,?)}");
-            cs.registerOutParameter(7, java.sql.Types.INTEGER);
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_email(?,?,?,?,?,?,?,?,?)}");
+            cs.registerOutParameter(9, java.sql.Types.INTEGER);
             cs.setInt(1, email.getId());
             cs.setString(2, email.getMail());
             cs.setInt(3, email.getLeadId());
             cs.setInt(4, email.getConfirmed());
             cs.setString(5, email.getNote());
             cs.setString(6, email.getActivationCode());
+            cs.setInt(7, email.getDhlDb());
+            cs.setInt(8, email.getInvoiceDb());
             cs.execute();
             return cs.getInt("p_result_id");
         } catch (SQLIntegrityConstraintViolationException ex) {
-            ex.printStackTrace();
+            logger.error(" Company Already have such email", ex);
             return -2;
         } catch (Exception exception) {
-            exception.printStackTrace();
+            logger.error(" during Email Action", exception);
             return 0;
-        } finally {
-            DBConnection.closeDbConn();
         }
     }
 
@@ -200,24 +419,23 @@ public class DbProcessing implements Serializable {
         try {
             DBConnection.openDbConn();
             CallableStatement cs;
-            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_phone_nums(?,?,?,?,?,?,?)}");
-            cs.registerOutParameter(7, java.sql.Types.INTEGER);
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_phone_nums(?,?,?,?,?,?,?,?)}");
+            cs.registerOutParameter(8, java.sql.Types.INTEGER);
             cs.setInt(1, phone.getId());
             cs.setString(2, phone.getPhoneNum());
             cs.setInt(3, phone.getLeadId());
             cs.setInt(4, phone.getConfirmed());
             cs.setString(5, phone.getNote());
             cs.setString(6, phone.getActivationCode());
+            cs.setInt(7, phone.getMobileOrNot());
             cs.execute();
             return cs.getInt("p_result_id");
         } catch (SQLIntegrityConstraintViolationException ex) {
-            ex.printStackTrace();
+            logger.error(" Company Already have such Phone Number", ex);
             return -2;
         } catch (Exception exception) {
-            exception.printStackTrace();
+            logger.error(" during Phone Number Action", exception);
             return 0;
-        } finally {
-            DBConnection.closeDbConn();
         }
     }
 
@@ -251,6 +469,7 @@ public class DbProcessing implements Serializable {
             }
             return count;
         } catch (SQLException ex) {
+            logger.error(" Getting Sent Emails Count", ex);
             return 0;
         }
 
@@ -301,6 +520,7 @@ public class DbProcessing implements Serializable {
             }
             return list;
         } catch (Exception ex) {
+            logger.error(" during Getting sent emails", ex);
             return null;
         }
 
@@ -317,6 +537,7 @@ public class DbProcessing implements Serializable {
             cs.execute();
             return cs.getInt("p_result_id");
         } catch (SQLException exception) {
+            logger.error(exception);
             return 0;
         } finally {
             DBConnection.closeDbConn();
@@ -338,6 +559,7 @@ public class DbProcessing implements Serializable {
             }
             return sum;
         } catch (SQLException exception) {
+            logger.error(exception);
             return 0;
         } finally {
             DBConnection.closeDbConn();
@@ -371,6 +593,7 @@ public class DbProcessing implements Serializable {
             }
             return sum;
         } catch (SQLException exception) {
+            logger.error(exception);
             return 0;
         } finally {
             DBConnection.closeDbConn();
@@ -393,6 +616,7 @@ public class DbProcessing implements Serializable {
             }
             return count;
         } catch (SQLException exception) {
+            logger.error(exception);
             return 0;
         } finally {
             DBConnection.closeDbConn();
@@ -420,14 +644,15 @@ public class DbProcessing implements Serializable {
             }
             return lead;
         } catch (Exception exception) {
+            logger.error(exception);
             return null;
         } finally {
             DBConnection.closeDbConn();
         }
     }
 
-    public static void insertSmsHistory(List<SentSMSes> list) throws SQLException {
-        String sql = "INSERT INTO `dhl`.`sent_sms` (`lead_id`, `to`, `text`, `response`, `status_id`) VALUES (?, ?, ?, ?, ?)";
+    public static void insertSmsHistory(List<SentSMSes> list, int userId) throws SQLException {
+        String sql = "INSERT INTO `dhl`.`sent_sms` (`lead_id`, `to`, `text`, `response`, `status_id`, `user_id`) VALUES (?, ?, ?, ?, ?, ?)";
         DBConnection.openDbConn();
         PreparedStatement ps = DBConnection.getDbConn().prepareStatement(sql);
         for (SentSMSes sms : list) {
@@ -440,6 +665,21 @@ public class DbProcessing implements Serializable {
             ps.setString(3, sms.getText());
             ps.setString(4, sms.getResponse());
             ps.setInt(5, sms.getStatus());
+            ps.setInt(6, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    public static void insertEmailHistory(List<SentEmails> list, int userId) throws SQLException {
+        String sql = "INSERT INTO `sent_emails` (`email_id`, `subject`, `body_text`, `status`, `user_id`) VALUES (?, ?, ?, ?, ?)";
+        DBConnection.openDbConn();
+        PreparedStatement ps = DBConnection.getDbConn().prepareStatement(sql);
+        for (SentEmails email : list) {
+            ps.setInt(1, email.getId());
+            ps.setString(2, email.getSubject());
+            ps.setString(3, email.getBodyText());
+            ps.setInt(4, email.getStatus());
+            ps.setInt(5, userId);
             ps.executeUpdate();
         }
     }
@@ -457,21 +697,92 @@ public class DbProcessing implements Serializable {
         try {
             DBConnection.openDbConn();
             CallableStatement cs;
-            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_sms_count(?,?,?,?,?)}");
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_sms_count(?,?,?,?,?,?)}");
             cs.setDate(1, fromDateSql);
             cs.setDate(2, toDateSql);
             cs.setString(3, srchSms.getTo());
             cs.setInt(4, srchSms.getStatus());
             cs.setString(5, srchSms.getText());
+            cs.setInt(6, srchSms.getSentUserId());
             ResultSet res = cs.executeQuery();
             while (res.next()) {
                 count = res.getInt(1);
             }
             return count;
         } catch (SQLException ex) {
+            logger.error(ex);
             return 0;
         }
 
+    }
+
+    public static String confirmSMSOrEmail(String code, boolean numberConfirm) {
+        try {
+            DBConnection.openDbConn();
+            Statement cs = DBConnection.getDbConn().createStatement();
+            ResultSet res = cs.executeQuery("select * from " + (numberConfirm ? "phone_numbers" : "emails") + " where activation_code='" + code + "'");
+            PhoneNumbers number = null;
+            Emails email = null;
+            String result = null;
+            if (numberConfirm) {
+                while (res.next()) {
+                    number = new PhoneNumbers(res.getInt("id"),
+                            res.getString("phone_num"),
+                            res.getInt("lead_id"),
+                            res.getInt("confirmed"),
+                            res.getString("note"),
+                            res.getString("activation_code"),
+                            dateFormat.format(res.getTimestamp("create_date")),
+                            res.getInt("mobile_or_not")
+                    );
+                }
+                if (number != null) {
+                    number.setConfirmed(2);
+                    number.setActivationCode(null);
+                    phoneAction(number);
+                    res = cs.executeQuery("select concat(company_name,'(#', company_id_number, ')') from leads where lead_id='"
+                            + number.getLeadId() + "'");
+                    while (res.next()) {
+                        result = res.getString(1) + "  --  " + number.getPhoneNum();
+                    }
+                }
+            } else {
+                email = buildEmail(res);
+                if (email != null) {
+                    email.setConfirmed(2);
+                    email.setActivationCode(null);
+                    emailAction(email);
+                    res = cs.executeQuery("select concat(company_name,'(#', company_id_number, ')') from leads where lead_id='"
+                            + email.getLeadId() + "'");
+                    while (res.next()) {
+                        result = res.getString(1) + "  --  " + email.getMail();
+                    }
+                }
+            }
+            return result;
+        } catch (SQLException ex) {
+            logger.error(ex);
+            return null;
+        } finally {
+            DBConnection.closeDbConn();
+        }
+    }
+
+    private static Emails buildEmail(ResultSet res) throws SQLException {
+        Emails email = null;
+        while (res.next()) {
+            email = new Emails(res.getInt("id"),
+                    res.getString("mail"),
+                    res.getInt("lead_id"),
+                    res.getInt("confirmed"),
+                    res.getString("note"),
+                    res.getString("activation_code"),
+                    dateFormat.format(res.getTimestamp("create_date")),
+                    res.getInt("dhl_db"),
+                    res.getInt("invoice_db")
+            );
+        }
+        return email;
     }
 
     public static List<SentSMSes> getSmses(SentSMSes srchSms, int start, int rowLimit) {
@@ -489,7 +800,7 @@ public class DbProcessing implements Serializable {
         try {
             DBConnection.openDbConn();
             CallableStatement cs;
-            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_sms(?,?,?,?,?,?,?,?)}");
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_sms(?,?,?,?,?,?,?,?,?)}");
             cs.setDate(1, fromDateSql);
             cs.setDate(2, toDateSql);
             cs.setString(3, srchSms.getTo());
@@ -498,6 +809,7 @@ public class DbProcessing implements Serializable {
             cs.setInt(6, start);
             cs.setInt(7, rowLimit);
             cs.setString(8, srchSms.getLeadData());
+            cs.setInt(9, srchSms.getSentUserId());
             ResultSet res = cs.executeQuery();
             SentSMSes sms;
             while (res.next()) {
@@ -509,11 +821,13 @@ public class DbProcessing implements Serializable {
                 sms.setLeadData(res.getString("lead_data"));
                 sms.setStatus(res.getInt("status_id"));
                 sms.setResponse(res.getString("response"));
+                sms.setSentUser(res.getString("user_description"));
                 sms.setStrSendTime(dateFormat.format(res.getTimestamp("create_date")));
                 list.add(sms);
             }
             return list;
         } catch (Exception ex) {
+            logger.error(ex);
             return null;
         }
 
@@ -639,7 +953,7 @@ public class DbProcessing implements Serializable {
             }
             return leads;
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Can't load leads list from DB ", ex);
             return null;
         }
 
@@ -702,7 +1016,7 @@ public class DbProcessing implements Serializable {
             }
             return count;
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Can't load leads count from DB ", ex);
             return 0;
         }
 
@@ -726,6 +1040,7 @@ public class DbProcessing implements Serializable {
             }
             return departments;
         } catch (SQLException ex) {
+            logger.error("Can't load leads departments from DB ", ex);
             return null;
         } finally {
             DBConnection.closeDbConn();
@@ -754,6 +1069,7 @@ public class DbProcessing implements Serializable {
             }
             return history;
         } catch (SQLException ex) {
+            logger.error("Can't load leads limits history from DB ", ex);
             return null;
         } finally {
             DBConnection.closeDbConn();
@@ -772,7 +1088,7 @@ public class DbProcessing implements Serializable {
             cs.execute();
             return cs.getInt("p_result_id");
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            logger.error(ex);
             return 0;
         }
     }
@@ -788,6 +1104,7 @@ public class DbProcessing implements Serializable {
             cs.execute();
             return cs.getInt("p_result_id");
         } catch (SQLException ex) {
+            logger.error(ex);
             return 0;
         }
     }
@@ -799,6 +1116,7 @@ public class DbProcessing implements Serializable {
             cs.executeUpdate("update leads set status_id='" + statusId + "' where lead_id='" + leadId + "'");
             return 1;
         } catch (SQLException exception) {
+            logger.error(exception);
             return 0;
         }
     }
@@ -811,6 +1129,7 @@ public class DbProcessing implements Serializable {
             cs = (com.mysql.jdbc.CallableStatement) DBConnection.getDbConn().prepareCall("{CALL expired()}");
             cs.execute();
         } catch (SQLException exception) {
+            logger.error(exception);
         }
     }
 
@@ -854,7 +1173,7 @@ public class DbProcessing implements Serializable {
             return resultId;
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.error("Can't Save leads data into DB ", ex);
             return 0;
         } finally {
             DBConnection.closeDbConn();
@@ -878,6 +1197,7 @@ public class DbProcessing implements Serializable {
             }
             return depts;
         } catch (Exception ex) {
+            logger.error("Can't load departments from DB ", ex);
             return null;
         } finally {
             DBConnection.closeDbConn();
@@ -899,6 +1219,7 @@ public class DbProcessing implements Serializable {
             resultId = cs.getInt("p_result_id");
             return resultId;
         } catch (SQLException ex) {
+            logger.error("Can't save leads docs into DB ", ex);
             return 0;
         } finally {
             DBConnection.closeDbConn();

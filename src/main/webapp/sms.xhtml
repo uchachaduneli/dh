@@ -18,7 +18,7 @@
                     <p:watermark for="srchToId" value="ადრესატი"/>
                     <p:watermark for="srchTextId" value="ტექსტი"/>
                     <p:watermark for="srchCompanyId" value="კომპანია | საიდენტ. N"/>
-                    <p:panelGrid columns="8">
+                    <p:panelGrid columns="9">
                         <p:calendar navigator="true" value="#{smsBean.searchObj.sendDateStart}"
                                     id="historyFromDateID">
                             <p:ajax event="dateSelect" listener="#{smsBean.validateFromDateFilter()}"
@@ -51,6 +51,12 @@
                             <f:selectItem itemLabel="წარმატებული" itemValue="#{1}"/>
                             <f:selectItem itemValue="#{2}" itemLabel="წარუმატებელი"/>
                             <p:ajax event="change" listener="#{smsBean.filterStatus()}"/>
+                        </p:selectOneMenu>
+
+                        <p:selectOneMenu value="#{smsBean.searchObj.sentUserId}">
+                            <f:selectItem itemLabel="გამგზავნით ფილტრი" itemValue=""/>
+                            <f:selectItems value="#{smsBean.usersSelection}"/>
+                            <p:ajax event="change" listener="#{smsBean.filterSaleOrAdmin()}"/>
                         </p:selectOneMenu>
 
                         <p:commandButton action="#{smsBean.init()}" icon="ui-icon-search" value="ძებნა" update="@form"
@@ -100,6 +106,9 @@
                 </p:column>
                 <p:column headerText="დრო">
                     <h:outputText style="width: 100%;" value="#{var.strSendTime}"/>
+                </p:column>
+                <p:column headerText="გამგზავნი">
+                    <h:outputText style="width: 100%;" value="#{var.sentUser}"/>
                 </p:column>
                 <f:facet name="footer" class="case-dttbl-paginator-facet">
                 </f:facet>
