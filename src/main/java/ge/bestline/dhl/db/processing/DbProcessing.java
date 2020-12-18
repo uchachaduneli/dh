@@ -452,7 +452,7 @@ public class DbProcessing implements Serializable {
         try {
             DBConnection.openDbConn();
             CallableStatement cs;
-            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_emails_count(?,?,?,?,?,?,?,?)}");
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_emails_count(?,?,?,?,?,?,?,?,?)}");
 
             cs.setString(1, srchObj.getMail());
             cs.setInt(2, srchObj.getStatus());
@@ -462,6 +462,7 @@ public class DbProcessing implements Serializable {
             cs.setDate(6, fromDateSql);
             cs.setDate(7, toDateSql);
             cs.setString(8, srchObj.getSubject());
+            cs.setInt(9, srchObj.getUserId());
 
             ResultSet res = cs.executeQuery();
             while (res.next()) {
@@ -490,7 +491,7 @@ public class DbProcessing implements Serializable {
         try {
             DBConnection.openDbConn();
             CallableStatement cs;
-            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_emails(?,?,?,?,?,?,?,?,?,?)}");
+            cs = (CallableStatement) DBConnection.getDbConn().prepareCall("{CALL prc_get_sent_emails(?,?,?,?,?,?,?,?,?,?,?)}");
             cs.setInt(1, start);
             cs.setInt(2, rowLimit);
             cs.setString(3, srchObj.getMail());
@@ -501,6 +502,7 @@ public class DbProcessing implements Serializable {
             cs.setDate(8, toDateSql);
             cs.setInt(9, srchObj.getConfirmed());
             cs.setString(10, srchObj.getSubject());
+            cs.setInt(11, srchObj.getUserId());
 
             ResultSet res = cs.executeQuery();
             SentEmails obj;
@@ -515,6 +517,7 @@ public class DbProcessing implements Serializable {
                 obj.setIdentNumber(res.getString("ident_number"));
                 obj.setSubject(res.getString("subject"));
                 obj.setBodyText(res.getString("body_text"));
+                obj.setUserDesc(res.getString("user_description"));
                 obj.setStrSentDate(dateFormat.format(res.getTimestamp("create_date")));
                 list.add(obj);
             }
@@ -670,17 +673,21 @@ public class DbProcessing implements Serializable {
         }
     }
 
-    public static void insertEmailHistory(List<SentEmails> list, int userId) throws SQLException {
-        String sql = "INSERT INTO `sent_emails` (`email_id`, `subject`, `body_text`, `status`, `user_id`) VALUES (?, ?, ?, ?, ?)";
-        DBConnection.openDbConn();
-        PreparedStatement ps = DBConnection.getDbConn().prepareStatement(sql);
-        for (SentEmails email : list) {
-            ps.setInt(1, email.getId());
-            ps.setString(2, email.getSubject());
-            ps.setString(3, email.getBodyText());
-            ps.setInt(4, email.getStatus());
-            ps.setInt(5, userId);
-            ps.executeUpdate();
+    public static void insertEmailHistory(List<SentEmails> list, int userId) {
+        try {
+            String sql = "INSERT INTO `sent_emails` (`email_id`, `subject`, `body_text`, `status`, `user_id`) VALUES (?, ?, ?, ?, ?)";
+            DBConnection.openDbConn();
+            PreparedStatement ps = DBConnection.getDbConn().prepareStatement(sql);
+            for (SentEmails email : list) {
+                ps.setInt(1, email.getId());
+                ps.setString(2, email.getSubject());
+                ps.setString(3, email.getBodyText());
+                ps.setInt(4, email.getStatus());
+                ps.setInt(5, userId);
+                ps.executeUpdate();
+            }
+        } catch (Exception e) {
+            logger.error("Can't save Sent Emails to DB", e);
         }
     }
 

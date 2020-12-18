@@ -142,23 +142,6 @@ public class LeadBean implements Serializable {
 
     }
 
-    public void sendConfirmSMSOrMail() {
-        if (smsOrEmailConrifmCode == null || smsOrEmailConrifmCode.length() == 0 || checkSmsOrMail == 0) {
-            Messages.warn("მიუთითეთ აქტივაციის ტიპი და კოდი");
-            return;
-        }
-        String res = DbProcessing.confirmSMSOrEmail(smsOrEmailConrifmCode, checkSmsOrMail == 1);
-        if (res == null) {
-            Messages.warn("მითითებული მონაცემებით ჩანაწერი ვერ მოიძებნა");
-        } else {
-            Messages.info("Confirmed " + res);
-
-        }
-        Util.executeScript("checkDLGwidg.hide()");
-        smsOrEmailConrifmCode = null;
-        checkSmsOrMail = 0;
-    }
-
     public void redirectToEmails() {
         RequestContext.getCurrentInstance().execute("window.open('emails.jsf?leadId=" + slctedLead.getLeadId() + "', '_newtab')");
     }
@@ -198,14 +181,15 @@ public class LeadBean implements Serializable {
                                 try {
                                     DhlMail.sendEmail(email.getMail(),
                                             contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), contaction.getAttachmentsPath());
-                                    sentEmails.add(new SentEmails(email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 1));
+                                    sentEmails.add(new SentEmails(email.getMail(), email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 1));
+                                    logger.info("Email sent to " + email.getMail());
                                 } catch (Exception e) {
-                                    sentEmails.add(new SentEmails(email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 2));
                                     logger.error("Can't send email To: " + email.getMail(), e);
+                                    sentEmails.add(new SentEmails(email.getMail(), email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 2));
                                 }
                             });
-
                         }
+                        logger.info("Sent Emails for Db insert" + sentEmails);
                         if (!sentEmails.isEmpty()) {
                             DbProcessing.insertEmailHistory(sentEmails, currentUserId);
                         }
@@ -213,8 +197,6 @@ public class LeadBean implements Serializable {
                 }
                 Util.executeScript("smsDLGwidg.hide();");
                 Messages.info("შეტყობინება გაგზავნილია");
-
-
             } catch (Exception e) {
                 logger.error("Can't send email", e);
                 Messages.error("მეილის გაგზავნა ვერ მოხერხდა");

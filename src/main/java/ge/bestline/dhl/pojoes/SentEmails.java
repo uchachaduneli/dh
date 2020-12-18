@@ -12,61 +12,31 @@ public class SentEmails implements Serializable {
     private String strSentDate;
     private String identNumber;
     private int leadId;
-    private int userDesc;
+    private int userId;
+    private String userDesc;
     private String company;
     private String subject;
     private String bodyText;
     private Date sendDateStart;
     private Date sendDateEnd;
 
-    public SentEmails(int id, String subject, String bodyText, int status) {
+    public SentEmails(String email, int id, String subject, String bodyText, int status) {
         this.subject = subject;
         this.bodyText = bodyText;
         this.id = id;
         this.status = status;
+        this.mail = email;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public SentEmails() {
-    }
-
-    public int getUserDesc() {
-        return userDesc;
-    }
-
-    public void setUserDesc(int userDesc) {
-        this.userDesc = userDesc;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getBodyText() {
-        return bodyText;
-    }
-
-    public void setBodyText(String bodyText) {
-        this.bodyText = bodyText;
-    }
-
-    public int getLeadId() {
-        return leadId;
-    }
-
-    public void setLeadId(int leadId) {
-        this.leadId = leadId;
-    }
-
-    public String getCompany() {
-        return company;
-    }
-
-    public void setCompany(String company) {
-        this.company = company;
     }
 
     public int getId() {
@@ -125,6 +95,46 @@ public class SentEmails implements Serializable {
         this.identNumber = identNumber;
     }
 
+    public int getLeadId() {
+        return leadId;
+    }
+
+    public void setLeadId(int leadId) {
+        this.leadId = leadId;
+    }
+
+    public String getUserDesc() {
+        return userDesc;
+    }
+
+    public void setUserDesc(String userDesc) {
+        this.userDesc = userDesc;
+    }
+
+    public String getCompany() {
+        return company;
+    }
+
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getBodyText() {
+        return bodyText;
+    }
+
+    public void setBodyText(String bodyText) {
+        this.bodyText = bodyText;
+    }
+
     public Date getSendDateStart() {
         return sendDateStart;
     }
@@ -139,5 +149,13 @@ public class SentEmails implements Serializable {
 
     public void setSendDateEnd(Date sendDateEnd) {
         this.sendDateEnd = sendDateEnd;
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "email_id=" + id +
+                ", mail='" + mail + '\'' +
+                '}';
     }
 }

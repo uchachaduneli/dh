@@ -7,6 +7,7 @@ package ge.bestline.dhl.beans;
 
 import ge.bestline.dhl.db.processing.DbProcessing;
 import ge.bestline.dhl.pojoes.SentEmails;
+import ge.bestline.dhl.pojoes.User;
 import ge.bestline.dhl.utils.Constants;
 import ge.bestline.dhl.utils.Messages;
 import ge.bestline.dhl.utils.Util;
@@ -32,6 +33,7 @@ public class EmailsBean implements Serializable {
     private int rowLimit = 15;
     private String paginator;
     private List<SelectItem> rowCountList;
+    private List<SelectItem> usersSelection = new ArrayList<SelectItem>();
 
     public EmailsBean() {
         if (Util.getSessionParameter("userId") != null) {
@@ -50,6 +52,9 @@ public class EmailsBean implements Serializable {
             if (Util.getSessionParameter("confirmed") != null) {
                 searchObj.setConfirmed((Integer) Util.getSessionParameter("confirmed"));
             }
+            if (Util.getSessionParameter("sent_em_user_id") != null) {
+                searchObj.setUserId((Integer) Util.getSessionParameter("sent_em_user_id"));
+            }
             if (Util.getSessionParameter("date_filter_start") != null) {
                 searchObj.setSendDateStart((Date) Util.getSessionParameter("date_filter_start"));
             }
@@ -57,6 +62,12 @@ public class EmailsBean implements Serializable {
                 searchObj.setSendDateEnd((Date) Util.getSessionParameter("date_filter_end"));
             }
             loadRowCountList();
+            if (usersSelection.isEmpty()) {
+                List<User> workers = DbProcessing.getUsers(0, "", "");
+                for (User user : workers) {
+                    usersSelection.add(new SelectItem(user.getId(), user.getDescription()));
+                }
+            }
             init();
         } else {
             Util.logout();
@@ -104,6 +115,13 @@ public class EmailsBean implements Serializable {
         Util.removeSessionAttribute("date_filter_end");
         searchObj.setSendDateStart(null);
         searchObj.setSendDateEnd(null);
+    }
+
+    public void filterSaleOrAdmin() {
+        try {
+            Util.setSessionParameter("sent_em_user_id", searchObj.getUserId());
+        } catch (Exception e) {
+        }
     }
 
     public void filterStatus() {
@@ -241,5 +259,13 @@ public class EmailsBean implements Serializable {
 
     public void setRowCountList(List<SelectItem> rowCountList) {
         this.rowCountList = rowCountList;
+    }
+
+    public List<SelectItem> getUsersSelection() {
+        return usersSelection;
+    }
+
+    public void setUsersSelection(List<SelectItem> usersSelection) {
+        this.usersSelection = usersSelection;
     }
 }

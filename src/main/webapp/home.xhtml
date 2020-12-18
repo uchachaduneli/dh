@@ -311,46 +311,6 @@
             </p:contextMenu>
         </h:form>
 
-
-        <p:dialog widgetVar="checkDLGwidg" position="top" modal="true" id="checkDlgId"
-                  style="max-height: 600px; overflow: auto;" header="ტელეფონის N/ელ.ფოსტის კონფირმაცია"
-                  resizable="false"
-                  width="700">
-            <h:form id="checkDlgFormId" prependId="false" enctype="multipart/form-data">
-                <p:growl id="checkgrowlid" showDetail="true" life="5000"/>
-                <p:panelGrid id="checkPnlGridId" columns="2" style="width: 100%;
-                             margin-top: 10px;" styleClass="pnlGridClass">
-                    <h:outputLabel value="აქტივაციის ტიპი"/>
-                    <h:selectOneRadio styleClass="radioTable" value="#{leadBean.checkSmsOrMail}">
-                        <f:selectItem itemValue="1" itemLabel="ტელეფონის N"/>
-                        <f:selectItem itemValue="2" itemLabel="ელ. ფოსტა"/>
-                    </h:selectOneRadio>
-                    <h:outputLabel value="აქტივაციის კოდი"/>
-                    <p:inputText value="#{leadBean.smsOrEmailConrifmCode}"/>
-
-                </p:panelGrid>
-                <p:panelGrid columns="2" style="width: 100%; margin-top: 0px;" styleClass="pnlGridClass">
-                    <p:commandButton value="დახურვა"
-                                     icon="ui-icon-close"
-                                     style=" font-weight: normal !important; font-size: 14px!important;"
-                                     onclick="checkDLGwidg.hide();"/>
-                    <h:panelGroup layout="block">
-                        <center>
-                            <p:commandButton id="submitsdfsDialoasdasgsad"
-                                             value="გაგზავნა"
-                                             action="#{leadBean.sendConfirmSMSOrMail()}"
-                                             icon="ui-icon-check"
-                                             widgetVar="leadsavewidget233"
-                                             onclick="leadsavewidget233.disable();"
-                                             oncomplete="leadsavewidget233.enable();"
-                                             update="@(#checkgrowlid)"
-                                             style=" font-weight: normal !important; font-size: 18px!important; width: 70%;"/>
-                        </center>
-                    </h:panelGroup>
-                </p:panelGrid>
-            </h:form>
-        </p:dialog>
-
         <p:dialog widgetVar="smsDLGwidg" position="top" modal="true" id="smsDlgId"
                   style="max-height: 600px; overflow: auto;"
                   header="შეტყობინების გაგზავნა" resizable="false" width="700">

@@ -11,7 +11,6 @@ import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import java.io.Serializable;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -101,24 +100,20 @@ public class EmailBean implements Serializable {
                             replace("{ACTIVATIONCODE}", tmp.getActivationCode()).
                             replace("{URLPARAMS}", tmp.getId() + "/" + tmp.getActivationCode()),
                     null);
-            sentEmails.add(new SentEmails(tmp.getId(), "Email Confirmation", confParams.getConfirm_email_template(), 1));
+            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", confParams.getConfirm_email_template(), 1));
         } catch (ConfigurationException e) {
-            sentEmails.add(new SentEmails(tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2));
+            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2));
             Messages.warn(e.getMessage());
             logger.error(e);
             return;
         } catch (Exception e) {
-            sentEmails.add(new SentEmails(tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2));
+            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2));
             Messages.warn("მეილის გაგზავნა ვერ მოხერხდა");
             logger.error("Can't send email", e);
             return;
         }
         if (!sentEmails.isEmpty()) {
-            try {
                 DbProcessing.insertEmailHistory(sentEmails, currentUserId);
-            } catch (SQLException e) {
-                logger.error("Can't insert sent emails into Database", e);
-            }
         }
         if (DbProcessing.emailAction(tmp) > 0) {
             slctedLeadEmail = new Emails();

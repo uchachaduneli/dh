@@ -18,7 +18,7 @@
                     <p:watermark for="srchToId" value="ადრესატი"/>
                     <p:watermark for="srchTextId" value="საიდენტ. N"/>
                     <p:watermark for="srchSubjectId" value="subject"/>
-                    <p:panelGrid columns="9">
+                    <p:panelGrid columns="10">
                         <p:calendar navigator="true" value="#{emailsBean.searchObj.sendDateStart}"
                                     id="historyFromDateID">
                             <p:ajax event="dateSelect" listener="#{emailsBean.validateFromDateFilter()}"
@@ -58,6 +58,12 @@
                             <f:selectItem itemLabel="წარმატებული" itemValue="#{1}"/>
                             <f:selectItem itemValue="#{2}" itemLabel="წარუმატებელი"/>
                             <p:ajax event="change" listener="#{emailsBean.filterStatus()}"/>
+                        </p:selectOneMenu>
+
+                        <p:selectOneMenu value="#{emailsBean.searchObj.userId}">
+                            <f:selectItem itemLabel="გამგზავნით ფილტრი" itemValue=""/>
+                            <f:selectItems value="#{emailsBean.usersSelection}"/>
+                            <p:ajax event="change" listener="#{emailsBean.filterSaleOrAdmin()}"/>
                         </p:selectOneMenu>
 
                         <p:commandButton action="#{emailsBean.init()}" icon="ui-icon-search" value="ძებნა"
@@ -103,6 +109,9 @@
                 </p:column>
                 <p:column headerText="დრო">
                     <h:outputText style="width: 100%;" value="#{var.strSentDate}"/>
+                </p:column>
+                <p:column headerText="გამგზავნი">
+                    <h:outputText style="width: 100%;" value="#{var.userDesc}"/>
                 </p:column>
                 <p:column headerText="სტატუსი">
                     <h:outputText styleClass="ui-icon ui-icon-check" style="margin: 0 auto;"
