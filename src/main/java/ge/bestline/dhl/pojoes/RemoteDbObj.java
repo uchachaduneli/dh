@@ -6,6 +6,7 @@ public class RemoteDbObj implements Serializable {
     private String identNumber;
     private int clientId;
     private int contactId;
+    private int addressId;
     private String Email;
     private String name = "accountant";
 
@@ -15,6 +16,14 @@ public class RemoteDbObj implements Serializable {
         this.contactId = contactId;
         Email = email;
         this.name = name;
+    }
+
+    public int getAddressId() {
+        return addressId;
+    }
+
+    public void setAddressId(int addressId) {
+        this.addressId = addressId;
     }
 
     public RemoteDbObj() {
@@ -58,5 +67,17 @@ public class RemoteDbObj implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "RemoteDbObj{" +
+                "identNumber='" + identNumber + '\'' +
+                ", clientId=" + clientId +
+                ", contactId=" + contactId +
+                ", addressId=" + addressId +
+                ", Email='" + Email + '\'' +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

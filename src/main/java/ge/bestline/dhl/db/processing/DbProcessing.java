@@ -363,12 +363,31 @@ public class DbProcessing implements Serializable {
             dhlObj.setClientId(res.getInt(1));
         }
         if (dhlObj != null) {
-            System.out.println("Client with identNum" + companyIdenNum + " Found DHl DB ID=" + dhlObj.getClientId());
-            Statement cs2 = DhlCon.getDbConn().createStatement();
-            int ins = cs2.executeUpdate("insert into Contacts(ClientID, Name, Email, RecordDate) " +
-                    "values (" + dhlObj.getClientId() + ",'accountant', '" + email + "', CURRENT_TIMESTAMP)");
+            //inserting address for this client
+            // adress unda qondes contactis ID da contactsac unda qondes AddressId ro imat softshi gamouchndet
+            cs = DhlCon.getDbConn().createStatement();
+            cs.executeUpdate("delete from addresses where clientID=" + dhlObj.getClientId() + " and AddressLine1 = N'ინვოისის მისამართი'");
+            cs = DhlCon.getDbConn().createStatement();
+            int addrIns = cs.executeUpdate("INSERT INTO Addresses(ClientID, AddressLine1, CityID, AddressStatusID, RecordDate) VALUES ('"
+                    + dhlObj.getClientId() + "', N'ინვოისის მისამართი', 1, 1, CURRENT_TIMESTAMP)");
+            if (addrIns < 1) {
+                logger.error(" Can't insert address into DHL db for clientID : " + dhlObj.getClientId());
+                throw new SQLException("--- დომესტიკის ბაზაში კონტაქტი ვერ დაემატა" + companyIdenNum);
+            }
+
+            //selecting inserted address ID
+            cs = DhlCon.getDbConn().createStatement();
+            res = cs.executeQuery("SELECT ID FROM Addresses WHERE ClientID=" + dhlObj.getClientId() + " AND AddressLine1=N'ინვოისის მისამართი'");
+            while (res.next()) {
+                dhlObj.setAddressId(res.getInt(1));
+            }
+
+            //inserting contact
+            cs = DhlCon.getDbConn().createStatement();
+            int ins = cs.executeUpdate("INSERT INTO Contacts(ClientID, AddressID, Name, Email, RecordDate) " +
+                    "values (" + dhlObj.getClientId() + "," + dhlObj.getAddressId() + ", 'accountant', '" + email + "', CURRENT_TIMESTAMP)");
             if (ins < 1) {
-                logger.error(" Can't find Contact in DHL db with IdentNum: " + companyIdenNum);
+                logger.error(" Can't Insert Contact in DHL db ---- " + dhlObj);
                 throw new SQLException("--- დომესტიკის ბაზაში კონტაქტი ვერ დაემატა" + companyIdenNum);
             } else {
                 logger.info("Successfylly created DHL DB Contact for IdentNumber: " + companyIdenNum + " Email: " + email);

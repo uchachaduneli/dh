@@ -211,7 +211,7 @@
 
             function validateEmail() {
                 // var reValidEmail = new RegExp(/^(([^&lt;>()\[\]\.,;:\s@\"]+(\.[^&lt;>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^&lt;>()\.,;\s@\"]+\.{0,1})+[^&lt;>()\.,;:\s@\"]{2,})$/)
-                var reValidEmail = new RegExp(/^[\w-_\.+]*[\w-_\.]\@([\w]+\.)+[\w]+[\w]$/);
+                var reValidEmail = new RegExp(/^[\w-_\.+]*[\w-_\.]\@([\w-]+\.)+[\w]+[\w]$/);
                 var email = document.getElementById("emailInputId").value;
                 console.log(reValidEmail.test(email));
                 if (reValidEmail.test(email)) {
