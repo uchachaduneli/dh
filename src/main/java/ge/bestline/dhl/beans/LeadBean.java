@@ -175,8 +175,11 @@ public class LeadBean implements Serializable {
                             contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), contaction.getAttachmentsPath());
                 } else {
                     if (contaction.getSmsOrMailToSrchedOrOne() == 2) {// დასერჩილ ქეისებს უგზავნის MAIL
-                        init();
-                        for (Lead lead : leads) {
+//                        init();
+                        List<Lead> tmpLeadsList = DbProcessing
+                                .getLeads(searchLead, 0, loginedUser.getId(), leadStatusId, 0, 999999, expiredAlert, limitedAlert, callAlert,
+                                        payAlert, emptyIdent);
+                        for (Lead lead : tmpLeadsList) {
                             getLeadEmails(lead.getLeadId()).stream().forEach(email -> {
                                 try {
                                     DhlMail.sendEmail(email.getMail(),
@@ -189,7 +192,7 @@ public class LeadBean implements Serializable {
                                 }
                             });
                         }
-                        logger.info("Sent Emails for Db insert" + sentEmails);
+//                        logger.info("Sent Emails for Db insert" + sentEmails);
                         if (!sentEmails.isEmpty()) {
                             DbProcessing.insertEmailHistory(sentEmails, currentUserId);
                         }
@@ -223,8 +226,11 @@ public class LeadBean implements Serializable {
                 }
             } else {
                 if (contaction.getSmsOrMailToSrchedOrOne() == 2) {// დასერჩილ ქეისებს უგზავნის SMS
-                    init();
-                    for (Lead l : leads) {
+//                    init();
+                    List<Lead> tmpLeadsList = DbProcessing
+                            .getLeads(searchLead, 0, loginedUser.getId(), leadStatusId, 0, 999999, expiredAlert, limitedAlert, callAlert,
+                                    payAlert, emptyIdent);
+                    for (Lead l : tmpLeadsList) {
                         numbers = new HashMap<>();
                         List<String> numsList = new ArrayList<>();
                         List<PhoneNumbers> tmpLeadNumsList = DbProcessing.getLeadPhoneNums(l.getLeadId(), true)
