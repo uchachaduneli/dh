@@ -184,11 +184,11 @@ public class LeadBean implements Serializable {
                                 try {
                                     DhlMail.sendEmail(email.getMail(),
                                             contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), contaction.getAttachmentsPath());
-                                    sentEmails.add(new SentEmails(email.getMail(), email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 1));
+                                    sentEmails.add(new SentEmails(email.getMail(), email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 1, contaction.getAttachmentsPath()));
                                     logger.info("Email sent to " + email.getMail());
                                 } catch (Exception e) {
                                     logger.error("Can't send email To: " + email.getMail(), e);
-                                    sentEmails.add(new SentEmails(email.getMail(), email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 2));
+                                    sentEmails.add(new SentEmails(email.getMail(), email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 2, contaction.getAttachmentsPath()));
                                 }
                             });
                         }
