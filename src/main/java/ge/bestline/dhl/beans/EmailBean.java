@@ -100,20 +100,20 @@ public class EmailBean implements Serializable {
                             replace("{ACTIVATIONCODE}", tmp.getActivationCode()).
                             replace("{URLPARAMS}", tmp.getId() + "/" + tmp.getActivationCode()),
                     null);
-            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", confParams.getConfirm_email_template(), 1));
+            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", confParams.getConfirm_email_template(), 1, null));
         } catch (ConfigurationException e) {
-            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2));
+            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2, null));
             Messages.warn(e.getMessage());
             logger.error(e);
             return;
         } catch (Exception e) {
-            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2));
+            sentEmails.add(new SentEmails(tmp.getMail(), tmp.getId(), "Email Confirmation", e.getLocalizedMessage(), 2, null));
             Messages.warn("მეილის გაგზავნა ვერ მოხერხდა");
             logger.error("Can't send email", e);
             return;
         }
         if (!sentEmails.isEmpty()) {
-                DbProcessing.insertEmailHistory(sentEmails, currentUserId);
+            DbProcessing.insertEmailHistory(sentEmails, currentUserId);
         }
         if (DbProcessing.emailAction(tmp) > 0) {
             slctedLeadEmail = new Emails();
