@@ -2,6 +2,7 @@ package ge.bestline.dhl.pojoes;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 public class SentEmails implements Serializable {
     private int id;
@@ -19,13 +20,23 @@ public class SentEmails implements Serializable {
     private String bodyText;
     private Date sendDateStart;
     private Date sendDateEnd;
+    List<String> attachments;
 
-    public SentEmails(String email, int id, String subject, String bodyText, int status) {
+    public SentEmails(String email, int id, String subject, String bodyText, int status, List<String> attachments) {
         this.subject = subject;
         this.bodyText = bodyText;
         this.id = id;
         this.status = status;
         this.mail = email;
+        this.attachments = attachments;
+    }
+
+    public List<String> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<String> attachments) {
+        this.attachments = attachments;
     }
 
     public int getUserId() {

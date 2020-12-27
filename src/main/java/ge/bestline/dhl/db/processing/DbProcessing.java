@@ -645,6 +645,26 @@ public class DbProcessing implements Serializable {
         }
     }
 
+    public static List<SentEmailsDocs> getSentEmailsAttachments(int sentEmailsId) {
+        List<SentEmailsDocs> docs = new ArrayList<>();
+        try {
+            Statement st = DBConnection.getDbConn().createStatement();
+            ResultSet rs = st.executeQuery("SELECT * from sent_email_docs where sent_email_id='" + sentEmailsId + "'");
+            while (rs.next()) {
+                docs.add(new SentEmailsDocs(
+                        rs.getInt("id"),
+                        rs.getInt("sent_email_id"),
+                        rs.getString("doc_name")
+                ));
+            }
+            return docs;
+
+        } catch (Exception e) {
+            logger.error(e);
+            return null;
+        }
+    }
+
     public static Lead getExistingLead(String leadIdIdentNumber) {
         try {
             Lead lead = null;
@@ -704,6 +724,17 @@ public class DbProcessing implements Serializable {
                 ps.setInt(4, email.getStatus());
                 ps.setInt(5, userId);
                 ps.executeUpdate();
+                if (email.getAttachments() != null) {
+                    email.getAttachments().stream().forEach(s -> {
+                        try {
+                            Statement st = DBConnection.getDbConn().createStatement();
+                            st.executeUpdate("INSERT INTO sent_email_docs (sent_email_id, doc_name, user_id) " +
+                                    "VALUES ('" + email.getId() + "','" + s + "','" + userId + "')");
+                        } catch (Exception throwables) {
+                            logger.error("Can't save uploads list for Email: " + email.getMail() + " File Path: " + s);
+                        }
+                    });
+                }
             }
         } catch (Exception e) {
             logger.error("Can't save Sent Emails to DB", e);

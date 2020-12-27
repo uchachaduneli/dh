@@ -7,6 +7,7 @@ package ge.bestline.dhl.beans;
 
 import ge.bestline.dhl.db.processing.DbProcessing;
 import ge.bestline.dhl.pojoes.SentEmails;
+import ge.bestline.dhl.pojoes.SentEmailsDocs;
 import ge.bestline.dhl.pojoes.User;
 import ge.bestline.dhl.utils.Constants;
 import ge.bestline.dhl.utils.Messages;
@@ -34,6 +35,7 @@ public class EmailsBean implements Serializable {
     private String paginator;
     private List<SelectItem> rowCountList;
     private List<SelectItem> usersSelection = new ArrayList<SelectItem>();
+    private List<SentEmailsDocs> documents;
 
     public EmailsBean() {
         if (Util.getSessionParameter("userId") != null) {
@@ -72,6 +74,10 @@ public class EmailsBean implements Serializable {
         } else {
             Util.logout();
         }
+    }
+
+    public void loadSentEmailsAttachments() {
+        documents = DbProcessing.getSentEmailsAttachments(slctedEmail.getId());
     }
 
     public void init() {
@@ -267,5 +273,13 @@ public class EmailsBean implements Serializable {
 
     public void setUsersSelection(List<SelectItem> usersSelection) {
         this.usersSelection = usersSelection;
+    }
+
+    public List<SentEmailsDocs> getDocuments() {
+        return documents;
+    }
+
+    public void setDocuments(List<SentEmailsDocs> documents) {
+        this.documents = documents;
     }
 }

@@ -104,9 +104,6 @@
                 <p:column headerText="Subject" title="#{var.bodyText}">
                     <h:outputText value="#{var.subject}"/>
                 </p:column>
-                <p:column headerText="Note">
-                    <h:outputText value="#{var.note}"/>
-                </p:column>
                 <p:column headerText="დრო">
                     <h:outputText style="width: 100%;" value="#{var.strSentDate}"/>
                 </p:column>
@@ -119,6 +116,17 @@
                     <h:outputText styleClass="ui-icon ui-icon-closethick" style="margin: 0 auto;"
                                   rendered="#{var.status ne 1}"/>
                 </p:column>
+                <p:column headerText="მოქმედება" exportable="false">
+                    <p:commandButton title="დეტალური ინფორმაცია"
+                                     icon="ui-icon-clipboard" action="#{emailsBean.loadSentEmailsAttachments}"
+                                     update="@(#fullInfoDlgFormId)"
+                                     oncomplete="fullInfoDlg.show();">
+                        <f:setPropertyActionListener value="#{var}" target="#{emailsBean.slctedEmail}"/>
+                    </p:commandButton>
+                </p:column>
+                <p:ajax event="rowDblselect" update="@(#fullInfoDlgFormId)"
+                        listener="#{emailsBean.loadSentEmailsAttachments}"
+                        oncomplete="fullInfoDlg.show();"/>
                 <f:facet name="footer" class="case-dttbl-paginator-facet">
                 </f:facet>
             </p:dataTable>
@@ -126,6 +134,48 @@
                 <h:outputFormat escape="false" value="#{emailsBean.paginator}" class="case-dttbl-paginator-facet"/>
             </h:panelGroup>
         </h:form>
+
+        <p:dialog widgetVar="fullInfoDlg" modal="true" styleClass="insertDialogStyleClass" position="top"
+                  height="296" id="fullInfoDlgId" header="დეტალური ინფორმაცია" resizable="false" width="700">
+            <h:form id="fullInfoDlgFormId">
+                <p:panelGrid id="pnlGridId1" columns="2" style="width: 100%;" styleClass="pnlGridClass">
+
+                    <h:outputLabel value="ID"/>
+                    <h:outputText style="width: 100%;" value="#{emailsBean.slctedEmail.id}"/>
+
+                    <h:outputLabel value="კომპანია"/>
+                    <h:outputText style="width: 100%;" value="#{emailsBean.slctedEmail.company}"/>
+
+                    <h:outputLabel value="ადრესატი"/>
+                    <h:outputText style="width: 100%;" value="#{emailsBean.slctedEmail.mail}"/>
+
+                    <h:outputLabel value="Subject"/>
+                    <h:outputText style="width: 100%;" value="#{emailsBean.slctedEmail.subject}"/>
+
+                    <h:outputLabel value="ტექსტი"/>
+                    <h:panelGroup layout="block">
+                        #{emailsBean.slctedEmail.bodyText}
+                    </h:panelGroup>
+
+                    <h:outputLabel value="დაემატა"/>
+                    <h:outputText value="#{emailsBean.slctedEmail.strSentDate}"/>
+
+                    <h:outputLabel value="თანდართული დოკუმენტი(ები):"/>
+                    <h:panelGroup layout="block" style="width: 100%;">
+                        <ul>
+                            <ui:repeat value="#{emailsBean.documents}" var="docVar">
+                                <li><a href="http://2.240.0.12/uploads/#{docVar.docName}"
+                                       target="_blank">#{docVar.docName}</a></li>
+                            </ui:repeat>
+                        </ul>
+                    </h:panelGroup>
+
+                </p:panelGrid>
+                <p:commandButton value="დახურვა" icon="ui-icon-close"
+                                 style=" float: right; font-weight: normal !important; margin-top: 5px;font-size: 14px;"
+                                 onclick="fullInfoDlg.hide();"/>
+            </h:form>
+        </p:dialog>
     </ui:define>
 </ui:composition>
 </html>
