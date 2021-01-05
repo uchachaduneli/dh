@@ -306,7 +306,7 @@ public class LeadBean implements Serializable {
 
         if (usersSelection.isEmpty()) {
             loadWorkers();
-            usersSelection.add(new SelectItem("", "თანამშრ."));
+//            usersSelection.add(new SelectItem("", "თანამშრ."));
             for (User user : workers) {
                 usersSelection.add(new SelectItem(user.getId(), user.getDescription()));
             }

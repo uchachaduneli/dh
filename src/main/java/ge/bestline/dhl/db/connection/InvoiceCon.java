@@ -15,7 +15,7 @@ public class InvoiceCon implements Serializable {
 
     private static final String dbUrl = "jdbc:sqlserver://2.240.0.13:1433;"
             + "databaseName=Invoices;user=mailuser;password=1234!@#$;";
-    //    private static final String dbUrl = "jdbc:sqlserver://192.168.0.6:1433;"
+//        private static final String dbUrl = "jdbc:sqlserver://192.168.0.6:1433;"
 //            + "databaseName=Invoices;user=sa;password=Anacuabanacua123!@#;";
     private static final String dbDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     private static final Logger logger = LogManager.getLogger(InvoiceCon.class);

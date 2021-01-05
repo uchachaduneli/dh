@@ -8,7 +8,7 @@
         <link rel="stylesheet" href="resources/css/home.css"/>
         <h:form id="operHomeForm" prependId="false" style="width: 100%;">
             <p:growl id="globalMessages" showDetail="true" life="4000"/>
-            <p:commandButton value="|" update="@form" action="#{leadBean.init()}"
+            <p:commandButton value="." update="@form" action="#{leadBean.init()}"
                              style="width: 0px; height: 0px; margin-left: 0.2%"/>
             <p:panel header="">
                 <p:watermark value="დან" for="startDateFilterId"/>
@@ -22,7 +22,7 @@
                 <p:watermark value="ფასდაკ." for="srchCompSalePercentId"/>
                 <p:watermark value="სერვ. ტიპი" for="srchCompServiceTypeId"
                              rendered="#{utilBean.iurist or utilBean.admin}"/>
-                <p:panelGrid columns="8" styleClass="filtersgridStyleClass" style="width: 99%;">
+                <p:panelGrid columns="8" styleClass="filtersgridStyleClass">
                     <p:commandButton value="დამატება"
                                      action="#{leadBean.initDialog(0)}"
                                      icon="ui-icon-plus"
@@ -61,7 +61,7 @@
                     <h:panelGroup layout="block">
                         <p:inputText value="#{leadBean.searchLead.companyIdentCode}"
                                      title="გამოიყენეთ მოსანიშნი ცარიელი მნიშვნელობების მოსაძებნად"
-                                     id="srchCompIdentCodeId" style="display: inline-block; "/>
+                                     id="srchCompIdentCodeId" style="display: inline-block; width: 120px;"/>
                         <p:selectBooleanCheckbox value="#{leadBean.emptyIdent}"
                                                  style="display: inline-block; padding-left: 5px; height: 15px;">
                             <p:ajax update="@form" listener="#{leadBean.selectEmptyIdents()}"/>
@@ -99,13 +99,13 @@
                     </p:selectOneMenu>
 
                     <p:selectOneMenu value="#{leadBean.searchLead.saleOrAdminId}">
-                        <f:selectItem itemLabel="სეილით ფილტრი" itemValue=""/>
+                        <f:selectItem itemLabel="სეილი" itemValue=""/>
                         <f:selectItems value="#{leadBean.usersSelection}"/>
                         <p:ajax event="change" listener="#{leadBean.filterSaleOrAdmin()}"/>
                     </p:selectOneMenu>
 
-                    <p:selectOneMenu value="#{leadBean.searchLead.operatorId}">
-                        <f:selectItem itemLabel="ოპერატორით ფილტრი" itemValue=""/>
+                    <p:selectOneMenu value="#{leadBean.searchLead.operatorId}" style="width: 144px !important;">
+                        <f:selectItem itemLabel="ოპერატორი" itemValue=""/>
                         <f:selectItems value="#{leadBean.usersSelection}"/>
                         <p:ajax event="change" listener="#{leadBean.filterOperator()}"/>
                     </p:selectOneMenu>
@@ -123,12 +123,9 @@
                     <p:inputText value="#{leadBean.searchLead.serviceType}" id="srchCompServiceTypeId"
                                  rendered="#{utilBean.iurist or utilBean.admin}"/>
 
-                    <p:commandButton value="ძებნა" icon="ui-icon-search" update="@form" action="#{leadBean.init()}"/>
+                    <p:commandButton value="." update="@form" action="#{leadBean.init()}"
+                                     style="width: 0px; height: 0px; margin-left: 0.2%"/>
 
-                    <p:selectOneMenu value="#{leadBean.rowLimit}">
-                        <f:selectItems value="#{leadBean.rowCountList}"/>
-                        <p:ajax event="change" update="@form" listener="#{leadBean.rowsCountChangeListener()}"/>
-                    </p:selectOneMenu>
                     <h:panelGroup layout="block">
                         <p:selectOneRadio value="#{leadBean.leadStatusId}" rendered="#{!utilBean.operator}"
                                           style="padding: 0px !important; font-size: 12px; width: 120px;">
@@ -143,13 +140,24 @@
                             <p:ajax event="change" listener="#{leadBean.handleActivesFilter()}"/>
                         </p:selectOneRadio>
                     </h:panelGroup>
+                    <h:panelGroup layout="block"></h:panelGroup>
+                    <p:commandButton value="ძებნა" icon="ui-icon-search" update="@form"
+                                     action="#{leadBean.init()}" style="width: 100%;"/>
 
-                    <h:commandLink style="height: 30px; width: 30px;">
-                        <p:graphicImage value="/resources/imgs/excel.png"
-                                        title="xls ფორმატში ექსპორტი(ძებნის შედეგის)"/>
-                        <p:dataExporter type="xls" target="operatorLeadsTableId" fileName="sailLeads" encoding="UTF-8"
-                                        postProcessor="#{leadBean.postProcessXLS}"/>
-                    </h:commandLink>
+                    <h:panelGroup layout="block">
+                        <p:selectOneMenu value="#{leadBean.rowLimit}" style="display: inline-block">
+                            <f:selectItems value="#{leadBean.rowCountList}"/>
+                            <p:ajax event="change" update="@form" listener="#{leadBean.rowsCountChangeListener()}"/>
+                        </p:selectOneMenu>
+
+                        <h:commandLink style="height: 30px; width: 30px; float: right">
+                            <p:graphicImage value="/resources/imgs/excel.png"
+                                            title="xls ფორმატში ექსპორტი(ძებნის შედეგის)"/>
+                            <p:dataExporter type="xls" target="operatorLeadsTableId" fileName="sailLeads"
+                                            encoding="UTF-8"
+                                            postProcessor="#{leadBean.postProcessXLS}"/>
+                        </h:commandLink>
+                    </h:panelGroup>
                 </p:panelGrid>
             </p:panel>
 
@@ -244,11 +252,11 @@
                         <f:setPropertyActionListener value="#{var}" target="#{leadBean.slctedLead}"/>
                     </p:commandButton>
                     <p:commandButton title="ელ.ფოსტა"
-                                     icon="ui-icon-mail-closed" actionListener="#{leadBean.redirectToEmails}">
+                                     icon="ui-icon-mail-closed" action="#{leadBean.redirectToEmails}">
                         <f:setPropertyActionListener value="#{var}" target="#{leadBean.slctedLead}"/>
                     </p:commandButton>
                     <p:commandButton title="ტელ. N"
-                                     icon="ui-icon-calculator" actionListener="#{leadBean.redirectToPhones}">
+                                     icon="ui-icon-calculator" action="#{leadBean.redirectToPhones}">
                         <f:setPropertyActionListener value="#{var}" target="#{leadBean.slctedLead}"/>
                     </p:commandButton>
                     <p:commandButton title="წაშლა" rendered="#{utilBean.iurist or utilBean.admin}"

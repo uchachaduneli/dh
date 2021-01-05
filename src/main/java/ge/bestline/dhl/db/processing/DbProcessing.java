@@ -211,20 +211,14 @@ public class DbProcessing implements Serializable {
             if (email.getDhlDb() == 2) {
                 RemoteDbObj dhlObj = null;
                 try {
-                    DhlCon.openDbConn();
-                    Statement cs = DhlCon.getDbConn().createStatement();
-//                    ResultSet res = cs.executeQuery("select ID from Contacts where Name = 'accountant'");
-                    ResultSet res = cs.executeQuery("select c.ID from Contacts c where c.Name = 'accountant' " +
-                            "and c.ClientID = (select cl.ID from Clients cl where cl.IdentificationNumber='"
-                            + companyIdenNum.trim() + "')");
-                    while (res.next()) {
-                        dhlObj = new RemoteDbObj();
-                        dhlObj.setContactId(res.getInt(1));
-                    }
+                    dhlObj = getDhlContactId(companyIdenNum);
+
                     if (dhlObj == null) {// tu bugaltris contacti ar arsebobs insert new
                         createDhlContact(companyIdenNum, email.getMail());
                     } else {// tu arsebobs update
-                        updateDhlContact(dhlObj.getContactId(), email.getMail());
+                        updateContactDbStatuses(email, true);
+
+                        updateDhlContact(dhlObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId()));
                     }
                 } catch (Exception e) {
                     result.add("დომესტიკის ბაზაში ინფორმაციის განახლება ვერ მოხერხდა");
@@ -239,6 +233,10 @@ public class DbProcessing implements Serializable {
                 try {
                     Statement cs = DBConnection.getDbConn().createStatement();
                     cs.executeUpdate("update emails set dhl_db = 1  where id='" + email.getId() + "'");
+                    RemoteDbObj dhlObj = getDhlContactId(companyIdenNum);
+                    if (dhlObj != null) {
+                        updateDhlContact(dhlObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId()));
+                    }
                 } catch (SQLException throwables) {
                     logger.error(" disabling sync With Dhl DB", throwables);
                 }
@@ -247,22 +245,14 @@ public class DbProcessing implements Serializable {
             if (email.getInvoiceDb() == 2) {
                 RemoteDbObj invoicesObj = null;
                 try {
-                    InvoiceCon.openDbConn();
-                    Statement cs = InvoiceCon.getDbConn().createStatement();
-//                    ResultSet res = cs.executeQuery("select ID from Contacts where FullName = 'accountant'");
-                    ResultSet res = cs.executeQuery("select c.ID from Contacts c where c.FullName = 'accountant' " +
-                            "and c.ClientID = (select cl.ID from Clients cl where cl.IdentificationNumber='" +
-                            companyIdenNum.trim() + "')");
-                    while (res.next()) {
-                        invoicesObj = new RemoteDbObj();
-                        invoicesObj.setContactId(res.getInt(1));
-                    }
+                    invoicesObj = getInvoicesContactId(companyIdenNum);
                     if (invoicesObj == null) {// tu bugaltris contacti ar arsebobs insert new
                         createInvoicesDbContact(companyIdenNum, email.getMail());
                     } else {// tu arsebobs update
-                        updateInvoicesDbContact(invoicesObj.getContactId(), email.getMail());
-                    }
+                        updateContactDbStatuses(email, false);
 
+                        updateInvoicesDbContact(invoicesObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId()));
+                    }
                 } catch (Exception e) {
                     result.add("ინვოისის ბაზაში ინფორმაციის განახლება ვერ მოხერხდა");
                     if (e.getMessage().contains("---"))
@@ -276,6 +266,10 @@ public class DbProcessing implements Serializable {
                 try {
                     Statement cs = DBConnection.getDbConn().createStatement();
                     cs.executeUpdate("update emails set invoice_db = 1  where id='" + email.getId() + "'");
+                    RemoteDbObj invoicesObj = getInvoicesContactId(companyIdenNum);
+                    if (invoicesObj != null) {// tu arsebobs update
+                        updateInvoicesDbContact(invoicesObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId()));
+                    }
                 } catch (SQLException throwables) {
                     logger.error(" during disabling sync With Invoice DB in Mysql", throwables);
                 }
@@ -287,30 +281,55 @@ public class DbProcessing implements Serializable {
         }
         if (success) {
             result.add("ოპერაცია დასრულდა წარმატებით.");
-            updateContactDbStatuses(email);
+//            updateContactDbStatuses(email, allowMultySyncForDhlDb);
         }
         return result;
     }
 
-    public static void updateContactDbStatuses(Emails email) {
+    public static RemoteDbObj getDhlContactId(String identNum) throws SQLException {
+        RemoteDbObj obj = null;
+        Statement cs = DhlCon.getDbConn().createStatement();
+        ResultSet res = cs.executeQuery("select c.ID from Contacts c where c.Name = 'accountant' " +
+                "and c.ClientID = (select cl.ID from Clients cl where cl.IdentificationNumber='"
+                + identNum.trim() + "')");
+        while (res.next()) {
+            obj = new RemoteDbObj();
+            obj.setContactId(res.getInt(1));
+        }
+        return obj;
+    }
+
+    public static RemoteDbObj getInvoicesContactId(String identNum) throws SQLException {
+        RemoteDbObj obj = null;
+        Statement cs = InvoiceCon.getDbConn().createStatement();
+        ResultSet res = cs.executeQuery("select c.ID from Contacts c where c.FullName = 'accountant' " +
+                "and c.ClientID = (select cl.ID from Clients cl where cl.IdentificationNumber='" +
+                identNum.trim() + "')");
+        while (res.next()) {
+            obj = new RemoteDbObj();
+            obj.setContactId(res.getInt(1));
+        }
+        return obj;
+    }
+
+    public static String getLeadConcatenatedEmails(int leadId) throws SQLException {
+        Statement st = DBConnection.getDbConn().createStatement();
+        ResultSet rs = st.executeQuery("SELECT GROUP_CONCAT(mail SEPARATOR';') FROM emails WHERE lead_id=" + leadId + "  AND dhl_db=2");
+        String concatenated = null;
+        while (rs.next()) {
+            return rs.getString(1);
+        }
+        return null;
+    }
+
+    public static void updateContactDbStatuses(Emails email, boolean syncForDhlDb) {
         try {
-            String columns = null;
-            String columns2 = null;
-            if (email.getInvoiceDb() == 2 && email.getDhlDb() == 2) {
-                columns = "invoice_db = '1', dhl_db='1'";
-                columns2 = "invoice_db = '2', dhl_db='2'";
-            } else if (email.getInvoiceDb() == 2 && email.getDhlDb() == 1) {
-                columns = "invoice_db = '1'";
-                columns2 = "invoice_db = '2'";
-            } else if (email.getInvoiceDb() == 1 && email.getDhlDb() == 2) {
-                columns = "dhl_db='1'";
-                columns2 = "dhl_db = '2'";
-            }
-            if (columns != null && columns2 != null) {
-                DBConnection.openDbConn();
-                Statement cs = DBConnection.getDbConn().createStatement();
-                cs.executeUpdate("update emails set " + columns + "  where lead_id='" + email.getLeadId() + "'");
-                cs.executeUpdate("update emails set " + columns2 + "  where id='" + email.getId() + "'");
+            Statement cs = DBConnection.getDbConn().createStatement();
+            if (syncForDhlDb) {
+                cs.executeUpdate("update emails set dhl_db=" + email.getDhlDb() + "  where id='" + email.getId() + "'");
+            } else {
+//                cs.executeUpdate("update emails set  invoice_db = 1  where lead_id='" + email.getLeadId() + "'");
+                cs.executeUpdate("update emails set invoice_db =" + email.getInvoiceDb() + "  where id='" + email.getId() + "'");
             }
         } catch (Exception e) {
             logger.error(" update Contact Db Statuses in Mysql", e);
@@ -366,10 +385,10 @@ public class DbProcessing implements Serializable {
             //inserting address for this client
             // adress unda qondes contactis ID da contactsac unda qondes AddressId ro imat softshi gamouchndet
             cs = DhlCon.getDbConn().createStatement();
-            cs.executeUpdate("delete from addresses where clientID=" + dhlObj.getClientId() + " and AddressLine1 = N'ინვოისის მისამართი'");
+            cs.executeUpdate("delete from addresses where clientID=" + dhlObj.getClientId() + " and AddressLine1 = 'accountant'");
             cs = DhlCon.getDbConn().createStatement();
             int addrIns = cs.executeUpdate("INSERT INTO Addresses(ClientID, AddressLine1, CityID, AddressStatusID, RecordDate) VALUES ('"
-                    + dhlObj.getClientId() + "', N'ინვოისის მისამართი', 1, 1, CURRENT_TIMESTAMP)");
+                    + dhlObj.getClientId() + "', 'accountant', 1, 1, CURRENT_TIMESTAMP)");
             if (addrIns < 1) {
                 logger.error(" Can't insert address into DHL db for clientID : " + dhlObj.getClientId());
                 throw new SQLException("--- დომესტიკის ბაზაში კონტაქტი ვერ დაემატა" + companyIdenNum);
@@ -377,7 +396,7 @@ public class DbProcessing implements Serializable {
 
             //selecting inserted address ID
             cs = DhlCon.getDbConn().createStatement();
-            res = cs.executeQuery("SELECT ID FROM Addresses WHERE ClientID=" + dhlObj.getClientId() + " AND AddressLine1=N'ინვოისის მისამართი'");
+            res = cs.executeQuery("SELECT ID FROM Addresses WHERE ClientID=" + dhlObj.getClientId() + " AND AddressLine1='accountant'");
             while (res.next()) {
                 dhlObj.setAddressId(res.getInt(1));
             }
@@ -399,7 +418,6 @@ public class DbProcessing implements Serializable {
     }
 
     public static void updateDhlContact(Integer Id, String email) throws SQLException {
-        DhlCon.openDbConn();
         Statement cs2 = DhlCon.getDbConn().createStatement();
         if (cs2.executeUpdate("update Contacts set Email = '" + email + "' where ID = '" + Id + "'") < 1) {
             logger.error(" Can't update Contact in DHL DB with email: " + email + " Id: " + Id);
