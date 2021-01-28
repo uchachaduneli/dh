@@ -139,6 +139,7 @@ span.case-dttbl-paginator-facet {
 
 .filtersgridStyleClass {
     background: #eeeeee url("/dhl/javax.faces.resource/images/ui-bg_highlight-soft_100_eeeeee_1x100.png.jsf?ln=primefaces-ui-lightness") 50% top repeat-x;
+    width: 100%;
 }
 
 #activeSelectionId tr td {
