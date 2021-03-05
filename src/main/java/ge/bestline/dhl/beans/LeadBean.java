@@ -168,11 +168,12 @@ public class LeadBean implements Serializable {
         if (contaction.getSmsOrMail() == 2) {//Sending Using Email
             List<SentEmails> sentEmails = new ArrayList<>();
             try {
+                ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
                 if (contaction.getSmsOrMailToSrchedOrOne() == 1) {// ხელით უთითებს ვისაც მიუვიდეს MAIL
                     DhlMail.sendEmail(contaction.getSmsOrMailTo().trim().
                                     replaceAll(";", ",").
                                     replaceAll("\\s", ""),
-                            contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), contaction.getAttachmentsPath());
+                            contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText() + " " + confParams.getEmail_titul(), contaction.getAttachmentsPath());
                 } else {
                     if (contaction.getSmsOrMailToSrchedOrOne() == 2) {// დასერჩილ ქეისებს უგზავნის MAIL
 //                        init();
@@ -183,7 +184,7 @@ public class LeadBean implements Serializable {
                             getLeadEmails(lead.getLeadId()).stream().forEach(email -> {
                                 try {
                                     DhlMail.sendEmail(email.getMail(),
-                                            contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), contaction.getAttachmentsPath());
+                                            contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText() + " " + confParams.getEmail_titul(), contaction.getAttachmentsPath());
                                     sentEmails.add(new SentEmails(email.getMail(), email.getId(), contaction.getSmsOrMailSubject(), contaction.getSmsOrMailText(), 1, contaction.getAttachmentsPath()));
                                     logger.info("Email sent to " + email.getMail());
                                 } catch (Exception e) {
@@ -219,7 +220,8 @@ public class LeadBean implements Serializable {
                 }
                 numbers.put(null, nuList);
                 try {
-                    DhlSMS.sendSms(contaction.getSmsOrMailText(), numbers, currentUserId);
+                    ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
+                    DhlSMS.sendSms(contaction.getSmsOrMailText() + "  " + confParams.getSms_titul(), numbers, currentUserId);
                 } catch (Exception e) {
                     failedSentsCount++;
                     logger.error("Sending SMSes Failed", e);
@@ -243,7 +245,8 @@ public class LeadBean implements Serializable {
                         });
                         numbers.put(l.getLeadId(), numsList);
                         try {
-                            DhlSMS.sendSms(contaction.getSmsOrMailText(), numbers, currentUserId);
+                            ConfigParams confParams = ConfigurationManager.getConfiguration().getConfParams();
+                            DhlSMS.sendSms(contaction.getSmsOrMailText() + "  " + confParams.getSms_titul(), numbers, currentUserId);
                             sentsCount++;
                         } catch (Exception e) {
                             failedSentsCount++;

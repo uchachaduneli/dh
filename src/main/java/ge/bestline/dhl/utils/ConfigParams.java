@@ -11,15 +11,17 @@ public class ConfigParams implements Serializable {
     String enable_multisending_sms_and_email;
     String confirm_email_template;
     String confirm_sms_template;
+    String email_titul;
+    String sms_titul;
 
     public ConfigParams() {
     }
 
-    public ConfigParams(String smtp_host, String smtp_port, String sender_email,
-                        String sender_email_pass, String sms_url,
-                        String enable_multisending_sms_and_email,
-                        String confirm_email_template,
-                        String confirm_sms_template) {
+    public ConfigParams(String smtp_host, String smtp_port,
+                        String sender_email, String sender_email_pass,
+                        String sms_url, String enable_multisending_sms_and_email,
+                        String confirm_email_template, String confirm_sms_template,
+                        String email_titul, String sms_titul) {
         this.smtp_host = smtp_host;
         this.smtp_port = smtp_port;
         this.sender_email = sender_email;
@@ -28,6 +30,24 @@ public class ConfigParams implements Serializable {
         this.enable_multisending_sms_and_email = enable_multisending_sms_and_email;
         this.confirm_email_template = confirm_email_template;
         this.confirm_sms_template = confirm_sms_template;
+        this.email_titul = email_titul;
+        this.sms_titul = sms_titul;
+    }
+
+    public String getEmail_titul() {
+        return email_titul;
+    }
+
+    public void setEmail_titul(String email_titul) {
+        this.email_titul = email_titul;
+    }
+
+    public String getSms_titul() {
+        return sms_titul;
+    }
+
+    public void setSms_titul(String sms_titul) {
+        this.sms_titul = sms_titul;
     }
 
     public String getConfirm_sms_template() {

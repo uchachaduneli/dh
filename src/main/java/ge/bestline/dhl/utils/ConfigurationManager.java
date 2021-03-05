@@ -19,7 +19,7 @@ public class ConfigurationManager implements Serializable {
     private static final Logger lgg = Logger.getLogger(ConfigurationManager.class);
     public static final String CONFIG_FILE_LOCATION = "/dhl-conf.properties";
     public static final String CONF_PATTERN = "(smtp_host|smtp_port|sender_email|sender_email_pass" +
-            "|sms_url|enable_multisending_sms_and_email|confirm_email_template|confirm_sms_template)";
+            "|sms_url|enable_multisending_sms_and_email|confirm_email_template|confirm_sms_template|email_titul|sms_titul)";
 
     protected long lastModified;
     private static ConfigurationManager instance = new ConfigurationManager();
@@ -98,7 +98,8 @@ public class ConfigurationManager implements Serializable {
                     confMap.get("sender_email"), confMap.get("sender_email_pass"),
                     confMap.get("sms_url"), confMap.get("enable_multisending_sms_and_email")
                     , confMap.get("confirm_email_template")
-                    , confMap.get("confirm_sms_template"));
+                    , confMap.get("confirm_sms_template"), confMap.get("email_titul")
+                    ,confMap.get("sms_titul"));
         else
             throw new ConfigurationException("Can not get configuration");
     }
