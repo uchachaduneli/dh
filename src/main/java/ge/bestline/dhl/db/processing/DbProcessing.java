@@ -218,7 +218,7 @@ public class DbProcessing implements Serializable {
                     } else {// tu arsebobs update
                         updateContactDbStatuses(email, true);
 
-                        updateDhlContact(dhlObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId()));
+                        updateDhlContact(dhlObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId(), true));
                     }
                 } catch (Exception e) {
                     result.add("დომესტიკის ბაზაში ინფორმაციის განახლება ვერ მოხერხდა");
@@ -235,7 +235,7 @@ public class DbProcessing implements Serializable {
                     cs.executeUpdate("update emails set dhl_db = 1  where id='" + email.getId() + "'");
                     RemoteDbObj dhlObj = getDhlContactId(companyIdenNum);
                     if (dhlObj != null) {
-                        updateDhlContact(dhlObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId()));
+                        updateDhlContact(dhlObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId(), true));
                     }
                 } catch (SQLException throwables) {
                     logger.error(" disabling sync With Dhl DB", throwables);
@@ -250,8 +250,8 @@ public class DbProcessing implements Serializable {
                         createInvoicesDbContact(companyIdenNum, email.getMail());
                     } else {// tu arsebobs update
                         updateContactDbStatuses(email, false);
-
-                        updateInvoicesDbContact(invoicesObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId()));
+                        String existingEmails = getLeadConcatenatedEmails(email.getLeadId(), false);
+                        updateInvoicesDbContact(invoicesObj.getContactId(), existingEmails == null ? email.getMail() : existingEmails);
                     }
                 } catch (Exception e) {
                     result.add("ინვოისის ბაზაში ინფორმაციის განახლება ვერ მოხერხდა");
@@ -268,7 +268,7 @@ public class DbProcessing implements Serializable {
                     cs.executeUpdate("update emails set invoice_db = 1  where id='" + email.getId() + "'");
                     RemoteDbObj invoicesObj = getInvoicesContactId(companyIdenNum);
                     if (invoicesObj != null) {// tu arsebobs update
-                        updateInvoicesDbContact(invoicesObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId()));
+                        updateInvoicesDbContact(invoicesObj.getContactId(), getLeadConcatenatedEmails(email.getLeadId(), false));
                     }
                 } catch (SQLException throwables) {
                     logger.error(" during disabling sync With Invoice DB in Mysql", throwables);
@@ -312,9 +312,9 @@ public class DbProcessing implements Serializable {
         return obj;
     }
 
-    public static String getLeadConcatenatedEmails(int leadId) throws SQLException {
+    public static String getLeadConcatenatedEmails(int leadId, boolean isDhl) throws SQLException {
         Statement st = DBConnection.getDbConn().createStatement();
-        ResultSet rs = st.executeQuery("SELECT GROUP_CONCAT(mail SEPARATOR';') FROM emails WHERE lead_id=" + leadId + "  AND dhl_db=2");
+        ResultSet rs = st.executeQuery("SELECT GROUP_CONCAT(mail SEPARATOR';') FROM emails WHERE lead_id=" + leadId + (isDhl ? "  AND dhl_db=2" : "  AND invoice_db=2"));
         String concatenated = null;
         while (rs.next()) {
             return rs.getString(1);
